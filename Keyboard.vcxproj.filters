@@ -16,6 +16,15 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{4501e061-44a9-42c7-9bf2-3ebcd317e87d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics Engine">
+      <UniqueIdentifier>{6b6ac937-f6e8-4663-9a23-5902313eea7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics Engine\Header Files">
+      <UniqueIdentifier>{89b4515e-f122-48fd-b7b0-77614577e62b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics Engine\Source Files">
+      <UniqueIdentifier>{5992e0ea-2495-4b1e-85ce-ccbfc406c9eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -36,6 +45,12 @@
     <ClCompile Include="defStb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <Filter>Physics Engine\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3.cpp">
+      <Filter>Physics Engine\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shapes.h">
@@ -49,6 +64,18 @@
     </ClInclude>
     <ClInclude Include="stb_image.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>Physics Engine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Precision.h">
+      <Filter>Physics Engine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>Physics Engine\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics.h">
+      <Filter>Physics Engine\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

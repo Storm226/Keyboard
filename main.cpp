@@ -8,6 +8,11 @@
 #include "stb_image.h"
 #include "Shapes.h"
 
+#include "Particle.h"
+#include "Physics.h"
+#include "Precision.h"
+#include "Vector3.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -126,6 +131,16 @@ int main()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // so now the vbo,vao and ebo should be setup. 
 
+
+    Particle* p = new Particle();
+
+    p->setPosition(Vector3(0, 1000, 0));
+    p->setVelocity(Vector3(0, 0, 0));
+    p->setAcceleration(Vector3(0, -100.05, 0));
+
+    p->setMass(1333.0);
+    p->setDamping(.99);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -135,7 +150,7 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
+        
         // input
         // -----
         processInput(window);
@@ -148,51 +163,42 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // PHYSICS //
+        // so now our particle p should have a new position 
+
+        Physics::Vector3 oldPos = p->getPosition();
+
+        p->integrate(deltaTime );
+
+        Physics::Vector3 newPos = p->getPosition();
+        
+        glm::vec3 glm_oldPos(oldPos.x, oldPos.y, oldPos.z);
+        glm::vec3 glm_newPos(newPos.x, newPos.y, newPos.z);
+
+        // calculate the difference in position (newPos - oldPos)
+        glm::vec3 difference = glm_newPos - glm_oldPos;
+
+
+
         // view/projection transformations
-
-
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane, farPlane);
-        // glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, difference);
+        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
         basicColor.setMat4("projection", projection);
-        //   basicColor.setMat4("view", view);
-
-           // world transformation
-           //glm::mat4 model = glm::mat4(1.0f);
-           //basicColor.setMat4("model", model);
-
+        basicColor.setMat4("view", view);
+        basicColor.setMat4("model", model);
 
 
         glBindVertexArray(VAO);
-
-        for (float j = 0; j < 10; j++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3((j * j) + 25.0f, j, 0.0f));
-            model = glm::scale(model, glm::vec3(j));
-            basicColor.setMat4("model", model);
-            glm::mat4 view = camera.GetViewMatrix();
-            basicColor.setMat4("view", view);
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-        }
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 
-        /*     for (float j = 0; j < 10; j++) {
-                 glm::mat4 model = glm::mat4(1.0f);
-                 model = glm::scale(model, glm::vec3(j));
-                 model = glm::translate(model, glm::vec3(j + 5.0f, 1.0f, 15.0f));
-                 basicColor.setMat4("model", model);
-                 glm::mat4 view = camera.GetViewMatrix();
-                 basicColor.setMat4("view", view);
-                 glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-             }*/
+  
 
-
-             /*glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-             model = glm::translate(model, glm::vec3(10.0f, 0.0f, 0.0f));
-             basicColor.setMat4("model", model);
-             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);*/
-
-             // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-             // -------------------------------------------------------------------------------
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
