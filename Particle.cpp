@@ -5,6 +5,7 @@
 
 void Particle::setMass(const real mass) {
 	this->mass = mass;
+	this->inverseMass = 1 / mass;
 }
 void Particle::setInverseMass(const real inverseMass) {
 	this->inverseMass = inverseMass;

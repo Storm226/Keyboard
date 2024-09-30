@@ -134,12 +134,16 @@ int main()
 
     Particle* p = new Particle();
 
-    p->setPosition(Vector3(0, 1000, 0));
+    p->setPosition(Vector3(0, 10, 0));
     p->setVelocity(Vector3(0, 0, 0));
-    p->setAcceleration(Vector3(0, -100.05, 0));
+    p->setAcceleration(Vector3(0, -1.05, 0));
 
     p->setMass(1333.0);
-    p->setDamping(.99);
+    
+    p->setDamping(.995);
+
+    const float fixedDeltaTime = 0.016f; // Fixed time step, roughly 60 FPS
+    float accumulator = 0.0f;            // Tracks time since last physics update
 
     // render loop
     // -----------
@@ -168,7 +172,7 @@ int main()
 
         Physics::Vector3 oldPos = p->getPosition();
 
-        p->integrate(deltaTime );
+        p->integrate(fixedDeltaTime);
 
         Physics::Vector3 newPos = p->getPosition();
         
@@ -178,13 +182,24 @@ int main()
         // calculate the difference in position (newPos - oldPos)
         glm::vec3 difference = glm_newPos - glm_oldPos;
 
+        float alpha = accumulator / fixedDeltaTime;
+        Physics::Vector3 interpolatedPos = oldPos * (1.0f - alpha) + newPos * alpha;
+
+        glm::vec3 glm_interpolatedPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
+
+        if (newPos.y < -10.0f)
+            p->addForce(Physics::Vector3(0.0f, 11330.0f, 0.0f)); // Adjust force as needed
+        else
+            p->addForce(Physics::Vector3(0.0f, -11330.0f, 0.0f)); // Apply gravity-like force
 
 
+
+        std::cout << newPos.toString() << std::endl;
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane, farPlane);
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model(1.0f);
-        model = glm::translate(model, difference);
+        model = glm::translate(model, glm_interpolatedPos);
         model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
         basicColor.setMat4("projection", projection);
         basicColor.setMat4("view", view);
