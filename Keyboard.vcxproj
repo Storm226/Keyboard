@@ -171,6 +171,8 @@
     <None Include="colors.vs" />
     <None Include="light.fs" />
     <None Include="light.vs" />
+    <None Include="RayMarching.fs" />
+    <None Include="RayMarching.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

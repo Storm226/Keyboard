@@ -91,5 +91,11 @@
     <None Include="light.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="RayMarching.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="RayMarching.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

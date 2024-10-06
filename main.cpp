@@ -28,7 +28,7 @@ const unsigned int SCR_HEIGHT = 1080;
 GLFWwindow* window;
 
 // camera
-Camera camera(glm::vec3(30.0f, 0.0f, 90.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f)); // Closer to the sphere
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -41,8 +41,6 @@ float farPlane = 1000.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 
 int main()
@@ -52,165 +50,63 @@ int main()
 
     // Compile shaders
     // ---------------
-    Shader basicColor("Shaders/colors.vs", "Shaders/colors.fs");
-    Shader basicLight("Shaders/light.vs", "Shaders/light.fs");
+    Shader s("RayMarching.vs", "RayMarching.fs");
+   
+    float quadVertices[] = {
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f,  1.0f,
+        -1.0f, -1.0f,  0.0f,  0.0f,
+         1.0f, -1.0f,  1.0f,  0.0f,
 
-
-    // We use vertices and indices for index based drawing 
-    // ---------------------------------------------------
-    std::vector<float> vertices = Shapes::getSquarePyramid();
-    std::vector<unsigned int> indices = {
-        // Base (two triangles)
-        0, 1, 2,
-        2, 3, 0,
-        // Sides (four triangles)
-        0, 1, 4,  // Side 1
-        1, 2, 4,  // Side 2
-        2, 3, 4,  // Side 3
-        3, 0, 4   // Side 4
+        -1.0f,  1.0f,  0.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,  0.0f,
+         1.0f,  1.0f,  1.0f,  1.0f
     };
 
-    // So, we have vertices, now we need to: 
-    // 1) put them into a Vertex Buffer object to store the data
-    // 2) configure a Vertex Array object to instruct the gpu how to interpret the data
-    // 3) Render the data
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
 
-    unsigned int VBO, VAO, EBO;
-    size_t bufferSize = sizeof(float) * vertices.size();
+    glBindVertexArray(quadVAO);
 
-    // Create and populate VBO
-    // -----------------------
-    glCreateBuffers(1, &VBO);
-    glNamedBufferStorage(VBO, bufferSize, vertices.data(), GL_DYNAMIC_STORAGE_BIT);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
-    // Creates a VAO and then binds the VBO to the VAO
-    // params -nBuffers, ptr->buffer
-    // -----------------------------------------------
-    glCreateVertexArrays(1, &VAO);
+    // Position attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 
-    // Here we tell openGL that the VBO is associated with
-    // index = bindingIndex = 0 of the VAO
-    // params - vaobj, bindingIndex, buffer, offset, stride
-    // ----------------------------------------------------
-    glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 8 * sizeof(float));
+    // Texture coordinate attribute
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-    // Now, Instruct the api how to use the vertex data
-    // in the shader we set the layout variables, that is how
-    // the shader knows at (location = 0), lies the position data.
-    // ----------------------------------------------------------
-    glEnableVertexArrayAttrib(VAO, 0);  // Positions
-    glEnableVertexArrayAttrib(VAO, 1);  // Normals
-    glEnableVertexArrayAttrib(VAO, 2);  // Texture Coordinates
+    glBindVertexArray(0); // Unbind
 
-    glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-    glVertexArrayAttribFormat(VAO, 2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float));
-
-    // params - (vaobj, attribindex, binding index)
-    // here we use bindingIndex = 0 for all calls because they all come from the same vao
-    // It is also worth noting that these calls aren't strictly neccessary as the code is,
-    // and that is because without explicitly defining these options openGL will assume
-    // defaults.
-    // ----------------------------------------------------------------------------------
-    glVertexArrayAttribBinding(VAO, 0, 0);
-    glVertexArrayAttribBinding(VAO, 1, 0);
-    glVertexArrayAttribBinding(VAO, 2, 0);
-
-
-    // Create Element Buffer Object used for indexed drawing
-    // -----------------------------------------------------
-    glCreateBuffers(1, &EBO);
-
-    // Copy indices into the EBO
-    size_t indexBufferSize = sizeof(unsigned int) * indices.size();
-    glNamedBufferStorage(EBO, indexBufferSize, indices.data(), GL_DYNAMIC_STORAGE_BIT);
-
-    // Bind the EBO to the VAO
-    glVertexArrayElementBuffer(VAO, EBO);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // so now the vbo,vao and ebo should be setup. 
-
-
-    Particle* p = new Particle();
-
-    p->setPosition(Vector3(0, 10, 0));
-    p->setVelocity(Vector3(0, 0, 0));
-    p->setAcceleration(Vector3(0, -1.05, 0));
-
-    p->setMass(1333.0);
-    
-    p->setDamping(.995);
-
-    const float fixedDeltaTime = 0.016f; // Fixed time step, roughly 60 FPS
-    float accumulator = 0.0f;            // Tracks time since last physics update
+    s.setMat4("View", camera.GetViewMatrix());
 
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-        // per-frame time logic
-        // --------------------
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // input
         // -----
         processInput(window);
 
         // Don't forget to use the shader program
-        basicColor.use();
+        s.use();
 
-        // render
-        // ------
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // per-frame time logic
+         // --------------------
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
-        // PHYSICS //
-        // so now our particle p should have a new position 
-
-        Physics::Vector3 oldPos = p->getPosition();
-
-        p->integrate(fixedDeltaTime);
-
-        Physics::Vector3 newPos = p->getPosition();
         
-        glm::vec3 glm_oldPos(oldPos.x, oldPos.y, oldPos.z);
-        glm::vec3 glm_newPos(newPos.x, newPos.y, newPos.z);
 
-        // calculate the difference in position (newPos - oldPos)
-        glm::vec3 difference = glm_newPos - glm_oldPos;
-
-        float alpha = accumulator / fixedDeltaTime;
-        Physics::Vector3 interpolatedPos = oldPos * (1.0f - alpha) + newPos * alpha;
-
-        glm::vec3 glm_interpolatedPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
-
-        if (newPos.y < -10.0f)
-            p->addForce(Physics::Vector3(0.0f, 11330.0f, 0.0f)); // Adjust force as needed
-        else
-            p->addForce(Physics::Vector3(0.0f, -11330.0f, 0.0f)); // Apply gravity-like force
-
-
-
-        std::cout << newPos.toString() << std::endl;
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane, farPlane);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model(1.0f);
-        model = glm::translate(model, glm_interpolatedPos);
-        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-        basicColor.setMat4("projection", projection);
-        basicColor.setMat4("view", view);
-        basicColor.setMat4("model", model);
-
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-
-
-  
+        // Bind the quad VAO and draw
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
