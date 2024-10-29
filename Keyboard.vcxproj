@@ -167,10 +167,21 @@
     <ClInclude Include="Vector3.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="colors.fs" />
-    <None Include="colors.vs" />
-    <None Include="light.fs" />
-    <None Include="light.vs" />
+    <None Include="RayMarching.fs" />
+    <None Include="RayMarching.vs" />
+    <None Include="Shaders\colors.fs" />
+    <None Include="Shaders\colors.vs" />
+    <None Include="Shaders\light.fs" />
+    <None Include="Shaders\light.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\container.jpg" />
+    <Image Include="Resources\container2.png" />
+    <Image Include="Resources\container2_specular.png" />
+    <Image Include="Resources\huh.jpg" />
+    <Image Include="Resources\math.jpg" />
+    <Image Include="Resources\matrix.jpg" />
+    <Image Include="Resources\Winky.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include <iostream>
 
 // constructor with vectors
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
@@ -69,11 +70,20 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constr
 // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 void Camera::ProcessMouseScroll(float yoffset)
 {
+    
+
+    if (yoffset < 0)
+        Position -= Front * .5f;
+    else
+        Position += Front * .75f;
+
     Zoom -= (float)yoffset;
     if (Zoom < 1.0f)
         Zoom = 1.0f;
     if (Zoom > 45.0f)
         Zoom = 45.0f;
+
+
 }
 
 // calculates the front vector from the Camera's (updated) Euler Angles
@@ -88,4 +98,8 @@ void Camera::updateCameraVectors()
     // also re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     Up = glm::normalize(glm::cross(Right, Front));
+}
+
+void Camera::setSpeed(float new_speed) {
+    MovementSpeed = new_speed;
 }

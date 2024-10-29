@@ -17,7 +17,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-unsigned int loadTexture(const char* path);
+void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
+
+void makeLight(unsigned int VBO, unsigned int VAO, const std::vector<float> data);
 
 int setUp();
 void cleanUp();
@@ -28,13 +30,14 @@ const unsigned int SCR_HEIGHT = 1080;
 GLFWwindow* window;
 
 // camera
-Camera camera(glm::vec3(30.0f, 0.0f, 90.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f)); // Closer to the sphere
+
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 // Frustum stuff
-float nearPlane = 0.01f;
+float nearPlane = 1.0f;
 float farPlane = 1000.0f;
 
 // timing
@@ -52,165 +55,124 @@ int main()
 
     // Compile shaders
     // ---------------
-    Shader basicColor("Shaders/colors.vs", "Shaders/colors.fs");
-    Shader basicLight("Shaders/light.vs", "Shaders/light.fs");
+    Shader base_shader("Shaders/colors.vs", "Shaders/colors.fs");
+    Shader lighting_shader("Shaders/light.vs", "Shaders/light.fs");
+
+    // what should my first renderer do
+
+    // I want to be able to say, here is some 3d data,
+    //  positions, normals, and texture coordinates. For a single object or somnething.
+
+    // I want the renderer to do the rest. 
+    // ie, bind the data stuctures, articulate to the gpu what is going on, etc. I dont wanna
+    // see any of this code below basically. 
+
+   
+    std::vector<float> vertices = Shapes::getCube();
 
 
-    // We use vertices and indices for index based drawing 
-    // ---------------------------------------------------
-    std::vector<float> vertices = Shapes::getSquarePyramid();
-    std::vector<unsigned int> indices = {
-        // Base (two triangles)
-        0, 1, 2,
-        2, 3, 0,
-        // Sides (four triangles)
-        0, 1, 4,  // Side 1
-        1, 2, 4,  // Side 2
-        2, 3, 4,  // Side 3
-        3, 0, 4   // Side 4
-    };
+    // BASE DATA
+    // ---------
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
 
-    // So, we have vertices, now we need to: 
-    // 1) put them into a Vertex Buffer object to store the data
-    // 2) configure a Vertex Array object to instruct the gpu how to interpret the data
-    // 3) Render the data
+    glBindVertexArray(cubeVAO);
 
-    unsigned int VBO, VAO, EBO;
-    size_t bufferSize = sizeof(float) * vertices.size();
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-    // Create and populate VBO
-    // -----------------------
-    glCreateBuffers(1, &VBO);
-    glNamedBufferStorage(VBO, bufferSize, vertices.data(), GL_DYNAMIC_STORAGE_BIT);
+    // Position attribute
+    glad_glEnableVertexAttribArray(0);  // Arg- Index of generic vertex attribute to be enabled/disabled
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);  // Args- index, size, type, normalized, stride, void* pointer
 
-    // Creates a VAO and then binds the VBO to the VAO
-    // params -nBuffers, ptr->buffer
-    // -----------------------------------------------
-    glCreateVertexArrays(1, &VAO);
+    // Surface Normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
-    // Here we tell openGL that the VBO is associated with
-    // index = bindingIndex = 0 of the VAO
-    // params - vaobj, bindingIndex, buffer, offset, stride
-    // ----------------------------------------------------
-    glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 8 * sizeof(float));
+    // Texture coordinate attribute
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-    // Now, Instruct the api how to use the vertex data
-    // in the shader we set the layout variables, that is how
-    // the shader knows at (location = 0), lies the position data.
-    // ----------------------------------------------------------
-    glEnableVertexArrayAttrib(VAO, 0);  // Positions
-    glEnableVertexArrayAttrib(VAO, 1);  // Normals
-    glEnableVertexArrayAttrib(VAO, 2);  // Texture Coordinates
+    glBindVertexArray(0); // Unbind, //  zero to break the existing vertex array object binding
 
-    glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-    glVertexArrayAttribFormat(VAO, 2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float));
-
-    // params - (vaobj, attribindex, binding index)
-    // here we use bindingIndex = 0 for all calls because they all come from the same vao
-    // It is also worth noting that these calls aren't strictly neccessary as the code is,
-    // and that is because without explicitly defining these options openGL will assume
-    // defaults.
-    // ----------------------------------------------------------------------------------
-    glVertexArrayAttribBinding(VAO, 0, 0);
-    glVertexArrayAttribBinding(VAO, 1, 0);
-    glVertexArrayAttribBinding(VAO, 2, 0);
-
-
-    // Create Element Buffer Object used for indexed drawing
-    // -----------------------------------------------------
-    glCreateBuffers(1, &EBO);
-
-    // Copy indices into the EBO
-    size_t indexBufferSize = sizeof(unsigned int) * indices.size();
-    glNamedBufferStorage(EBO, indexBufferSize, indices.data(), GL_DYNAMIC_STORAGE_BIT);
-
-    // Bind the EBO to the VAO
-    glVertexArrayElementBuffer(VAO, EBO);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // so now the vbo,vao and ebo should be setup. 
-
-
-    Particle* p = new Particle();
-
-    p->setPosition(Vector3(0, 10, 0));
-    p->setVelocity(Vector3(0, 0, 0));
-    p->setAcceleration(Vector3(0, -1.05, 0));
-
-    p->setMass(1333.0);
+    //Texture stuff
+    // Texture creation
     
-    p->setDamping(.995);
+    unsigned int texture1, texture2;
+    generateTexture("Resources/Winky.png", texture1, true);
+    generateTexture("Resources/container2.png", texture2, true);
+    base_shader.use();
+    base_shader.setInt("texture1", 0);
+    base_shader.setInt("texture2", 1);
 
-    const float fixedDeltaTime = 0.016f; // Fixed time step, roughly 60 FPS
-    float accumulator = 0.0f;            // Tracks time since last physics update
+    glBindVertexArray(0); // Unbind
 
+    camera.setSpeed(5.0f);
+    base_shader.use();
+    base_shader.setVec3("object_color", glm::vec3(1.0f, 0.5f, 0.31f));
+    base_shader.setVec3("light_color", glm::vec3(1.0f, 1.0f, 1.0f));
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-        // per-frame time logic
-        // --------------------
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+       
         // input
         // -----
         processInput(window);
 
+        // per-frame time logic
+       // --------------------
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // Don't forget to use the shader program
-        basicColor.use();
+        base_shader.use();
 
-        // render
-        // ------
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // PHYSICS //
-        // so now our particle p should have a new position 
 
-        Physics::Vector3 oldPos = p->getPosition();
+        // projection matrix
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 100.0f);
+        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-        p->integrate(fixedDeltaTime);
+        // Base Shader
+        // -----------
+        base_shader.setVec3("light_position", lightPos);
+        base_shader.setVec3("light_color", glm::vec3(1.0f, 1.0f, 1.0f));
+        base_shader.setVec3("view_position", camera.Position);
+        base_shader.setMat4("view", camera.GetViewMatrix());
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate_slow(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+        base_shader.setMat4("model", model);
+        base_shader.setMat4("projection", projection);
 
-        Physics::Vector3 newPos = p->getPosition();
+        // Bind the basic VAO and draw
+        glBindVertexArray(cubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Light Cube Shader
+        // ---------------
+        glm::mat4 lighting_model = glm::mat4(1.0f);
+        lighting_model = glm::scale(lighting_model, glm::vec3(.5f, .5f, .5f));
+        lighting_model = glm::translate(lighting_model, glm::vec3(5.0f, 5.0f, 0.0f));
+
+        lighting_shader.use();
+        lighting_shader.setMat4("model", lighting_model);
         
-        glm::vec3 glm_oldPos(oldPos.x, oldPos.y, oldPos.z);
-        glm::vec3 glm_newPos(newPos.x, newPos.y, newPos.z);
+        lighting_shader.setMat4("view", camera.GetViewMatrix());
+        lighting_shader.setMat4("projection", projection);
 
-        // calculate the difference in position (newPos - oldPos)
-        glm::vec3 difference = glm_newPos - glm_oldPos;
-
-        float alpha = accumulator / fixedDeltaTime;
-        Physics::Vector3 interpolatedPos = oldPos * (1.0f - alpha) + newPos * alpha;
-
-        glm::vec3 glm_interpolatedPos(interpolatedPos.x, interpolatedPos.y, interpolatedPos.z);
-
-        if (newPos.y < -10.0f)
-            p->addForce(Physics::Vector3(0.0f, 11330.0f, 0.0f)); // Adjust force as needed
-        else
-            p->addForce(Physics::Vector3(0.0f, -11330.0f, 0.0f)); // Apply gravity-like force
-
-
-
-        std::cout << newPos.toString() << std::endl;
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane, farPlane);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model(1.0f);
-        model = glm::translate(model, glm_interpolatedPos);
-        model = glm::scale(model, glm::vec3(5.0f, 5.0f, 5.0f));
-        basicColor.setMat4("projection", projection);
-        basicColor.setMat4("view", view);
-        basicColor.setMat4("model", model);
-
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-
-
-  
+        // Draw lights
+        glBindVertexArray(cubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -238,7 +200,7 @@ int setUp() {
 
     // glfw window creation
     // --------------------
-    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "KeyBoard", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -290,11 +252,10 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
-
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -338,41 +299,40 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
-unsigned int loadTexture(char const* path)
-{
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
 
-    int width, height, nrComponents;
-    unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+
+
+// Given a filename, a texture name, and t/f flag for alpha, 
+// initializes tecture name = texture(filename);
+// -------------------------------------------------
+void generateTexture(std::string filename, unsigned int& textureName, bool alpha) {
+    glGenTextures(1, &textureName);
+    glBindTexture(GL_TEXTURE_2D, textureName);
+    //glCreateTextures(GL_TEXTURE_2D, 1, &textureName);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load and generate the texture
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* data = stbi_load((filename).c_str(), &width, &height, &nrChannels, 0);
     if (data)
     {
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
+        if (!alpha) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
+        else {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
 
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
     }
     else
     {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
-        stbi_image_free(data);
+        std::cout << "Failed to load texture" << std::endl;
     }
-
-    return textureID;
+    stbi_image_free(data);
 }
