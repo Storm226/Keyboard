@@ -8,11 +8,6 @@
 #include "stb_image.h"
 #include "Shapes.h"
 
-#include "Particle.h"
-#include "Physics.h"
-#include "Precision.h"
-#include "Vector3.h"
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -55,8 +50,8 @@ int main()
 
     // Compile shaders
     // ---------------
-    Shader base_shader("Shaders/colors.vs", "Shaders/colors.fs");
-    Shader lighting_shader("Shaders/light.vs", "Shaders/light.fs");
+    Shader base_shader("Shaders/BlinnPhong.vs", "Shaders/BlinnPhong.fs");
+    Shader lighting_shader("Shaders/lightCube.vs", "Shaders/lightCube.fs");
 
     // what should my first renderer do
 
@@ -145,8 +140,17 @@ int main()
 
         // Base Shader
         // -----------
-        base_shader.setVec3("light_position", lightPos);
-        base_shader.setVec3("light_color", glm::vec3(1.0f, 1.0f, 1.0f));
+        base_shader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        base_shader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        base_shader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        base_shader.setFloat("material.shininess", 32.0f);
+
+        base_shader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        base_shader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+        base_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        base_shader.setVec3("light.position", lightPos);
+        base_shader.setVec3("light.color", glm::vec3(0.0f, 1.0f, 1.0f));
+
         base_shader.setVec3("view_position", camera.Position);
         base_shader.setMat4("view", camera.GetViewMatrix());
         glm::mat4 model = glm::mat4(1.0f);

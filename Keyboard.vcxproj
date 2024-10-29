@@ -169,10 +169,10 @@
   <ItemGroup>
     <None Include="RayMarching.fs" />
     <None Include="RayMarching.vs" />
-    <None Include="Shaders\colors.fs" />
-    <None Include="Shaders\colors.vs" />
-    <None Include="Shaders\light.fs" />
-    <None Include="Shaders\light.vs" />
+    <None Include="Shaders\BlinnPhong.fs" />
+    <None Include="Shaders\BlinnPhong.vs" />
+    <None Include="Shaders\lightCube.fs" />
+    <None Include="Shaders\lightCube.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\container.jpg" />
