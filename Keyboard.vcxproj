@@ -153,6 +153,7 @@
     <ClCompile Include="Source\defStb.cpp" />
     <ClCompile Include="Source\DirectionalLight.cpp" />
     <ClCompile Include="Source\PointLight.cpp" />
+    <ClCompile Include="Source\Renderer.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\Shapes.cpp" />
     <ClCompile Include="Source\SpotLight.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="Headers\Camera.h" />
     <ClInclude Include="Headers\PointLight.h" />
+    <ClInclude Include="Headers\Renderer.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\Shapes.h" />
     <ClInclude Include="Headers\SpotLight.h" />

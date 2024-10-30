@@ -8,13 +8,14 @@
 #include "Headers/PointLight.h"
 #include "Headers/DirectionalLight.h"
 #include "Headers/SpotLight.h"
+#include "Headers/Renderer.h"
  
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
-
+void setupLightCube(Shader& light_cube_shader, glm::vec3& p_light_position, glm::mat4& projection);
 int setUp();
 void cleanUp();
 
@@ -51,34 +52,7 @@ int main()
 
     // get geometry, normals, and tex coords
     std::vector<float> vertices = Shapes::getCube();
-
-    // BASE DATA
-    // ---------
-    unsigned int cubeVAO, cubeVBO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &cubeVBO);
-
-    glBindVertexArray(cubeVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    // Position attribute
-    glad_glEnableVertexAttribArray(0);  // Arg- Index of generic vertex attribute to be enabled/disabled
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);  // Args- index, size, type, normalized, stride, void* pointer
-
-    // Surface Normals
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    // Texture coordinate attribute
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-
-    glBindVertexArray(0); // Unbind, //  zero to break the existing vertex array object binding
-
-    //Texture stuff
-    // Texture creation
+    std::unique_ptr<Renderer> r{ new Renderer(vertices)};
     
     unsigned int diffuse_map, specular_map;
     generateTexture("Resources/container2.png", diffuse_map, true);
@@ -87,21 +61,13 @@ int main()
     base_shader.setInt("material.diffuse", 0);
     base_shader.setInt("material.specular", 1);
 
-    glBindVertexArray(0); // Unbind
 
-    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       
-        // input
-        // -----
         processInput(window);
-
-        // per-frame time logic
-        // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -111,10 +77,6 @@ int main()
 
         // projection matrix
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 100.0f);
-
-        // Base Shader
-        // -----------
-        glm::vec3 zero = glm::vec3(0.0f);
 
         base_shader.setVec3("view_position", camera.Position);
         base_shader.setFloat("material.shininess", 32.0f);
@@ -140,7 +102,6 @@ int main()
         sl->setPosition(camera.Position);
         sl->updateShader();
        
-    
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuse_map);
         glActiveTexture(GL_TEXTURE1);
@@ -152,28 +113,13 @@ int main()
         base_shader.setMat4("view", camera.GetViewMatrix());
         base_shader.setMat4("projection", projection);
 
-        // Bind the basic VAO and draw
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        // Light Cube Shader
-        // ---------------
-        glm::mat4 model_lighting = glm::mat4(1.0f);
-        model_lighting = glm::scale(model_lighting, glm::vec3(.5f, .5f, .5f));
-        model_lighting = glm::translate(model_lighting, p_light_position);
-
-        light_cube_shader.use();
-        light_cube_shader.setMat4("model", model_lighting);
-        
-        light_cube_shader.setMat4("view", camera.GetViewMatrix());
-        light_cube_shader.setMat4("projection", projection);
+        // Draw box
+        r->render();
 
         // Draw lights
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        setupLightCube(light_cube_shader, p_light_position, projection);
+        r->render();
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -304,7 +250,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void generateTexture(std::string filename, unsigned int& textureName, bool alpha) {
     glGenTextures(1, &textureName);
     glBindTexture(GL_TEXTURE_2D, textureName);
-    //glCreateTextures(GL_TEXTURE_2D, 1, &textureName);
     // set the texture wrapping/filtering options (on the currently bound texture object)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -324,11 +269,21 @@ void generateTexture(std::string filename, unsigned int& textureName, bool alpha
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             glGenerateMipmap(GL_TEXTURE_2D);
         }
-
     }
     else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+}
+
+void setupLightCube(Shader& light_cube_shader, glm::vec3& p_light_position, glm::mat4& projection) {
+    glm::mat4 model_lighting = glm::mat4(1.0f);
+    model_lighting = glm::scale(model_lighting, glm::vec3(.5f, .5f, .5f));
+    model_lighting = glm::translate(model_lighting, p_light_position);
+
+    light_cube_shader.use();
+    light_cube_shader.setMat4("model", model_lighting);
+    light_cube_shader.setMat4("view", camera.GetViewMatrix());
+    light_cube_shader.setMat4("projection", projection);
 }
