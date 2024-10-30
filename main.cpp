@@ -4,6 +4,7 @@
 #include "Headers/Camera.h"
 #include "Headers/stb_image.h"
 #include "Headers/Shapes.h"
+#include "Headers/PointLight.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -126,13 +127,10 @@ int main()
 
         // point light
         glm::vec3 p_light_position = rotation * glm::vec4(glm::vec3(5.0f, 7.0f, 5.0f), 1.0f);
-        base_shader.setVec3("p_light.position", p_light_position);
-        base_shader.setFloat("p_light.constant", 1.0f);
-        base_shader.setFloat("p_light.linear", 0.09f);
-        base_shader.setFloat("p_light.quadratic", 0.032f);
-        base_shader.setVec3("p_light.ambient", 0.05f, 0.05f, 0.05f);
-        base_shader.setVec3("p_light.diffuse", 1.0f, 1.0f, 1.0f);
-        base_shader.setVec3("p_light.specular", 1.0f, 1.0f, 1.0f);
+     
+        PointLight* p = new PointLight(base_shader); // Create a new PointLight instance
+        p->setPosition(p_light_position);
+        p->apply();
 
         // spotLight
         base_shader.setVec3("s_light.position", camera.Position);

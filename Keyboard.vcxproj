@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\defStb.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\PointLight.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\Shapes.h" />
     <ClInclude Include="Headers\stb_image.h" />
