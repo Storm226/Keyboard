@@ -149,17 +149,21 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\defStb.cpp" />
+    <ClCompile Include="Source\DirectionalLight.cpp" />
+    <ClCompile Include="Source\PointLight.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\Shapes.cpp" />
+    <ClCompile Include="Source\SpotLight.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="Headers\Camera.h" />
     <ClInclude Include="Headers\PointLight.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\Shapes.h" />
+    <ClInclude Include="Headers\SpotLight.h" />
     <ClInclude Include="Headers\stb_image.h" />
   </ItemGroup>
   <ItemGroup>

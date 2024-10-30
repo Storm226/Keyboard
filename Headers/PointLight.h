@@ -1,7 +1,7 @@
 #ifndef POINTLIGHT_H
 #define POINTLIGHT_H
 
-#include "Headers/Shader.h"
+#include "Shader.h"
 #include <glm/glm.hpp>
 
 class PointLight {
@@ -14,32 +14,17 @@ public:
         const glm::vec3& specular = glm::vec3(1.0f),
         float constant = 1.0f,
         float linear = 0.09f,
-        float quadratic = 0.032f)
-        : s(shader), position(position), ambient(ambient), diffuse(diffuse),
-        specular(specular), constant(constant), linear(linear), quadratic(quadratic) {}
+        float quadratic = 0.032f);
 
     // Method to update shader values
-    void apply() {
-        s.setVec3("p_light.position", position);
-        s.setFloat("p_light.constant", constant);
-        s.setFloat("p_light.linear", linear);
-        s.setFloat("p_light.quadratic", quadratic);
-        s.setVec3("p_light.ambient", ambient);
-        s.setVec3("p_light.diffuse", diffuse);
-        s.setVec3("p_light.specular", specular);
-    }
+    void updateShader();
 
-    // Getter and setter for position (optional)
-    void setPosition(const glm::vec3& newPosition) {
-        position = newPosition;
-    }
-
-    glm::vec3 getPosition() const {
-        return position;
-    }
+    // Getter and setter for position
+    void setPosition(const glm::vec3& newPosition);
+    glm::vec3 getPosition() const;
 
 private:
-    Shader& s; // Reference to the shader program
+    Shader& s; 
     glm::vec3 position;
     glm::vec3 ambient;
     glm::vec3 diffuse;
@@ -48,4 +33,5 @@ private:
     float linear;
     float quadratic;
 };
-#endif
+
+#endif // POINTLIGHT_H

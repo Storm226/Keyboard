@@ -77,7 +77,6 @@ void main()
    result = calculateDirectionalLight(d_light, surface_normal, view_direction);
    // Point Lighting
    result += calculatePointLight(p_light, surface_normal, fragment_position, view_direction);
-
    // Spot Lighting
    result += calculateSpotLight(s_light, surface_normal, fragment_position, view_direction);
 

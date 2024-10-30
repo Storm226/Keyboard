@@ -5,7 +5,9 @@
 #include "Headers/stb_image.h"
 #include "Headers/Shapes.h"
 #include "Headers/PointLight.h"
-
+#include "Headers/DirectionalLight.h"
+#include "Headers/SpotLight.h"
+ 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -97,7 +99,7 @@ int main()
         processInput(window);
 
         // per-frame time logic
-       // --------------------
+        // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -116,10 +118,8 @@ int main()
         base_shader.setFloat("material.shininess", 32.0f);
 
         // directional light
-        base_shader.setVec3("d_light.direction", -0.2f, -1.0f, -0.3f);
-        base_shader.setVec3("d_light.ambient", 0.05f, 0.05f, 0.05f);
-        base_shader.setVec3("d_light.diffuse", 0.8f, 0.8f, 0.8f);
-        base_shader.setVec3("d_light.specular", 1.0f, 1.0f, 1.0f);
+        DirectionalLight* d = new DirectionalLight(base_shader);
+        d->updateShader();
 
         float rotation_speed = .5f;
         float angle = rotation_speed * glfwGetTime();
@@ -130,19 +130,14 @@ int main()
      
         PointLight* p = new PointLight(base_shader); // Create a new PointLight instance
         p->setPosition(p_light_position);
-        p->apply();
+        p->updateShader();
 
         // spotLight
-        base_shader.setVec3("s_light.position", camera.Position);
-        base_shader.setVec3("s_light.direction", camera.Front);
-        base_shader.setFloat("s_light.cutOff", glm::cos(glm::radians(12.5f)));
-        base_shader.setFloat("s_light.outer_cutOff", glm::cos(glm::radians(15.0f)));
-        base_shader.setFloat("s_light.constant", 1.0f);
-        base_shader.setFloat("s_light.linear", 0.09f);
-        base_shader.setFloat("s_light.quadratic", 0.032f);
-        base_shader.setVec3("s_light.ambient", 0.0f, 0.0f, 0.0f);
-        base_shader.setVec3("s_light.diffuse", 0.5f, 0.0f, 0.5f);
-        base_shader.setVec3("s_light.specular", 0.7f, 0.0f, 0.7f);
+        SpotLight* sl = new SpotLight(base_shader);
+        sl->setDirection(camera.Front);
+        sl->setPosition(camera.Position);
+        sl->updateShader();
+       
     
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuse_map);
