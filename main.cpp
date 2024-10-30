@@ -3,10 +3,10 @@
 
 #include <iostream>
 
-#include "Shader.h"
-#include "Camera.h"
-#include "stb_image.h"
-#include "Shapes.h"
+#include "Headers/Shader.h"
+#include "Headers/Camera.h"
+#include "Headers/stb_image.h"
+#include "Headers/Shapes.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);

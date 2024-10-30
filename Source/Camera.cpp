@@ -1,4 +1,4 @@
-#include "Camera.h"
+#include "../Headers/Camera.h"
 #include <iostream>
 
 // constructor with vectors

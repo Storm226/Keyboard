@@ -1,5 +1,5 @@
-#include "Particle.h"
-#include "Precision.h"
+#include "../Headers/Particle.h"
+#include "../Headers/Precision.h"
 #include <cassert>
 
 

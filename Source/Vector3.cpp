@@ -1,6 +1,6 @@
-#include "Vector3.h"
-#include "Physics.h"
-#include "Precision.h"
+#include "../Headers/Vector3.h"
+#include "../Headers/Physics.h"
+#include "../Headers/Precision.h"
 #include <cmath>
 #include <string>
 #include <sstream>

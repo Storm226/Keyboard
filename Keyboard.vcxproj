@@ -147,28 +147,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="defStb.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Particle.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="Shapes.cpp" />
-    <ClCompile Include="Vector3.cpp" />
+    <ClCompile Include="Source\Camera.cpp" />
+    <ClCompile Include="Source\defStb.cpp" />
+    <ClCompile Include="Source\Shader.cpp" />
+    <ClCompile Include="Source\Shapes.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Particle.h" />
-    <ClInclude Include="Physics.h" />
-    <ClInclude Include="Precision.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Shapes.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Vector3.h" />
+    <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\Particle.h" />
+    <ClInclude Include="Headers\Shader.h" />
+    <ClInclude Include="Headers\Shapes.h" />
+    <ClInclude Include="Headers\stb_image.h" />
+    <ClInclude Include="Headers\Vector3.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="RayMarching.fs" />
-    <None Include="RayMarching.vs" />
     <None Include="Shaders\BlinnPhong.fs" />
     <None Include="Shaders\BlinnPhong.vs" />
     <None Include="Shaders\lightCube.fs" />
