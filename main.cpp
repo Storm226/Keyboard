@@ -47,6 +47,7 @@ int main()
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
+    camera.setSpeed(5.0f);
 
     // Compile shaders
     // ---------------
@@ -64,6 +65,7 @@ int main()
 
    
     std::vector<float> vertices = Shapes::getCube();
+
 
 
     // BASE DATA
@@ -94,19 +96,15 @@ int main()
     //Texture stuff
     // Texture creation
     
-    unsigned int texture1, texture2;
-    generateTexture("Resources/container2.png", texture1, true);
-    generateTexture("Resources/container2_specular.png", texture2, true);
+    unsigned int diffuse_map, specular_map;
+    generateTexture("Resources/container2.png", diffuse_map, true);
+    generateTexture("Resources/container2_specular.png", specular_map, true);
     base_shader.use();
-    base_shader.setInt("texture1", 0);
-    base_shader.setInt("texture2", 1);
+    base_shader.setInt("material.diffuse", 0);
+    base_shader.setInt("material.specular", 1);
 
     glBindVertexArray(0); // Unbind
 
-    camera.setSpeed(5.0f);
-    base_shader.use();
-    //base_shader.setVec3("object_color", glm::vec3(1.0f, 0.5f, 0.31f));
-    base_shader.setVec3("light_color", glm::vec3(1.0f, 1.0f, 1.0f));
     
     // render loop
     // -----------
@@ -127,42 +125,60 @@ int main()
         // Don't forget to use the shader program
         base_shader.use();
 
-        // textures
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-
         // projection matrix
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 100.0f);
-        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
         // Base Shader
         // -----------
-        base_shader.setInt("material.diffuse", 0);
-        base_shader.setInt("material.specular", 1);
+        glm::vec3 zero = glm::vec3(0.0f);
 
-        base_shader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        base_shader.setFloat("material.shininess", 32.0f);
-
-        base_shader.setVec3("light.ambient", 0.0f, 0.0f, 0.0f);
-        base_shader.setVec3("light.diffuse", 0.2f, 0.0f, 0.0f); 
-        base_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        base_shader.setVec3("light.position", camera.Position);
-        base_shader.setVec3("light.color", glm::vec3(1.0f, 1.0f, 1.0f));
 
         base_shader.setVec3("view_position", camera.Position);
-        base_shader.setMat4("view", camera.GetViewMatrix());
-        glm::mat4 model = glm::mat4(1.0f);
-     //  model = glm::rotate_slow(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-        base_shader.setMat4("model", model);
-        base_shader.setMat4("projection", projection);
+        base_shader.setFloat("material.shininess", 32.0f);
+
+        // directional light
+        base_shader.setVec3("d_light.direction", -0.2f, -1.0f, -0.3f);
+        base_shader.setVec3("d_light.ambient", zero);
+        base_shader.setVec3("d_light.diffuse",zero);
+        base_shader.setVec3("d_light.specular", zero);
+
+        float rotation_speed = .5f;
+        float angle = rotation_speed * glfwGetTime();
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // point light
+        glm::vec3 p_light_position = rotation * glm::vec4(glm::vec3(5.0f, 7.0f, 5.0f), 1.0f);
+        base_shader.setVec3("p_light.position", p_light_position);
+        base_shader.setFloat("p_light.constant", 1.0f);
+        base_shader.setFloat("p_light.linear", 0.09f);
+        base_shader.setFloat("p_light.quadratic", 0.032f);
+        base_shader.setVec3("p_light.ambient", 0.05f, 0.05f, 0.05f);
+        base_shader.setVec3("p_light.diffuse", 1.0f, 1.0f, 1.0f);
+        base_shader.setVec3("p_light.specular", 1.0f, 1.0f, 1.0f);
+
+        // spotLight
+        base_shader.setVec3("s_light.position", camera.Position);
+        base_shader.setVec3("s_light.direction", camera.Front);
+        base_shader.setFloat("s_light.cutOff", glm::cos(glm::radians(12.5f)));
+        base_shader.setFloat("s_light.outer_cutOff", glm::cos(glm::radians(15.0f)));
+        base_shader.setFloat("s_light.constant", 1.0f);
+        base_shader.setFloat("s_light.linear", 0.09f);
+        base_shader.setFloat("s_light.quadratic", 0.032f);
+        base_shader.setVec3("s_light.ambient", 0.0f, 0.0f, 0.0f);
+        base_shader.setVec3("s_light.diffuse", zero);
+        base_shader.setVec3("s_light.specular", zero);
+    
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-
+        glBindTexture(GL_TEXTURE_2D, diffuse_map);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        glBindTexture(GL_TEXTURE_2D, specular_map);
+
+        // MVP Transformations
+        glm::mat4 model = glm::mat4(1.0f);
+        base_shader.setMat4("model", model);
+        base_shader.setMat4("view", camera.GetViewMatrix());
+        base_shader.setMat4("projection", projection);
 
         // Bind the basic VAO and draw
         glBindVertexArray(cubeVAO);
@@ -172,7 +188,7 @@ int main()
         // ---------------
         glm::mat4 lighting_model = glm::mat4(1.0f);
         lighting_model = glm::scale(lighting_model, glm::vec3(.5f, .5f, .5f));
-        lighting_model = glm::translate(lighting_model, glm::vec3(5.0f, 5.0f, 0.0f));
+        lighting_model = glm::translate(lighting_model, p_light_position);
 
         lighting_shader.use();
         lighting_shader.setMat4("model", lighting_model);
