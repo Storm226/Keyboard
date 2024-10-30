@@ -2,9 +2,8 @@
 
 
 struct Material{
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    sampler2D diffuse;
+    sampler2D specular;
     float shininess;
 };
 
@@ -23,7 +22,6 @@ uniform sampler2D texture1;
 uniform sampler2D texture2;
 
 uniform vec3 object_color;
-uniform vec3 light_color;
 
 uniform vec3 view_position;
 
@@ -44,9 +42,10 @@ out vec4 FragColor;
 
 void main()
 {    
-     // Ambient lighting
-     //-----------------
-    vec3 ambient = material.ambient * light.ambient;
+    
+    // Ambient lighting
+    // ----------------
+    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord));
 
     // Diffuse lighting
     //-----------------
@@ -59,7 +58,7 @@ void main()
     // > 0 if acute angle between 
     // < 0 if obtuse
     float diff = max(dot(surface_normal, light_direction), 0.0);
-    vec3 diffuse = material.diffuse * light.diffuse * diff;
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
 
     // Specular Lighting
     // -----------------
@@ -67,23 +66,11 @@ void main()
     view_direction = normalize(view_direction);
     vec3 reflection_direction = reflect(-light_direction, surface_normal);
     float spec = pow(max(dot(view_direction, reflection_direction),0.0f), material.shininess);
-    vec3 specular = material.specular * spec * light.specular;
+    vec3 specular =  vec3(texture(material.specular, TexCoord)) * spec * light.specular;
     
 
-    vec3 result = (ambient + diffuse + specular) * object_color * light.color;
+    vec3 result = (ambient + diffuse + specular) * light.color;
     FragColor = vec4(result, 1.0f);   
-    
-    //FragColor = vec4(vec3(gl_FragCoord.z * gl_FragCoord.z, 0.0f, 0.0f), 1.0f);
-
-    // if texturing set true
-    if(false){
-     vec4 blendedTexture = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2);
-
-    // Apply lighting to the RGB channels, keep alpha from texture
-    vec3 resultColor = (ambient + diffuse) * blendedTexture.rgb;
-    FragColor = vec4(resultColor, blendedTexture.a);
-    }
-
-
+  
 }
  

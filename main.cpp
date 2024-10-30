@@ -95,8 +95,8 @@ int main()
     // Texture creation
     
     unsigned int texture1, texture2;
-    generateTexture("Resources/Winky.png", texture1, true);
-    generateTexture("Resources/container2.png", texture2, true);
+    generateTexture("Resources/container2.png", texture1, true);
+    generateTexture("Resources/container2_specular.png", texture2, true);
     base_shader.use();
     base_shader.setInt("texture1", 0);
     base_shader.setInt("texture2", 1);
@@ -105,7 +105,7 @@ int main()
 
     camera.setSpeed(5.0f);
     base_shader.use();
-    base_shader.setVec3("object_color", glm::vec3(1.0f, 0.5f, 0.31f));
+    //base_shader.setVec3("object_color", glm::vec3(1.0f, 0.5f, 0.31f));
     base_shader.setVec3("light_color", glm::vec3(1.0f, 1.0f, 1.0f));
     
     // render loop
@@ -133,30 +133,36 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-
         // projection matrix
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 100.0f);
         glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
         // Base Shader
         // -----------
-        base_shader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-        base_shader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        base_shader.setInt("material.diffuse", 0);
+        base_shader.setInt("material.specular", 1);
+
         base_shader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
         base_shader.setFloat("material.shininess", 32.0f);
 
-        base_shader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        base_shader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+        base_shader.setVec3("light.ambient", 0.0f, 0.0f, 0.0f);
+        base_shader.setVec3("light.diffuse", 0.2f, 0.0f, 0.0f); 
         base_shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        base_shader.setVec3("light.position", lightPos);
-        base_shader.setVec3("light.color", glm::vec3(0.0f, 1.0f, 1.0f));
+        base_shader.setVec3("light.position", camera.Position);
+        base_shader.setVec3("light.color", glm::vec3(1.0f, 1.0f, 1.0f));
 
         base_shader.setVec3("view_position", camera.Position);
         base_shader.setMat4("view", camera.GetViewMatrix());
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate_slow(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+     //  model = glm::rotate_slow(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
         base_shader.setMat4("model", model);
         base_shader.setMat4("projection", projection);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Bind the basic VAO and draw
         glBindVertexArray(cubeVAO);
@@ -302,8 +308,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
-
-
 
 
 // Given a filename, a texture name, and t/f flag for alpha, 
