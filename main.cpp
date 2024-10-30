@@ -66,8 +66,6 @@ int main()
    
     std::vector<float> vertices = Shapes::getCube();
 
-
-
     // BASE DATA
     // ---------
     unsigned int cubeVAO, cubeVBO;
@@ -132,15 +130,14 @@ int main()
         // -----------
         glm::vec3 zero = glm::vec3(0.0f);
 
-
         base_shader.setVec3("view_position", camera.Position);
         base_shader.setFloat("material.shininess", 32.0f);
 
         // directional light
         base_shader.setVec3("d_light.direction", -0.2f, -1.0f, -0.3f);
-        base_shader.setVec3("d_light.ambient", zero);
-        base_shader.setVec3("d_light.diffuse",zero);
-        base_shader.setVec3("d_light.specular", zero);
+        base_shader.setVec3("d_light.ambient", 0.05f, 0.05f, 0.05f);
+        base_shader.setVec3("d_light.diffuse", 0.8f, 0.8f, 0.8f);
+        base_shader.setVec3("d_light.specular", 1.0f, 1.0f, 1.0f);
 
         float rotation_speed = .5f;
         float angle = rotation_speed * glfwGetTime();
@@ -165,8 +162,8 @@ int main()
         base_shader.setFloat("s_light.linear", 0.09f);
         base_shader.setFloat("s_light.quadratic", 0.032f);
         base_shader.setVec3("s_light.ambient", 0.0f, 0.0f, 0.0f);
-        base_shader.setVec3("s_light.diffuse", zero);
-        base_shader.setVec3("s_light.specular", zero);
+        base_shader.setVec3("s_light.diffuse", 1.0f, 1.0f, 1.0f);
+        base_shader.setVec3("s_light.specular", 1.0f, 1.0f, 1.0f);
     
 
         glActiveTexture(GL_TEXTURE0);
