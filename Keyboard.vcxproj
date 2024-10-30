@@ -156,11 +156,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h" />
-    <ClInclude Include="Headers\Particle.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\Shapes.h" />
     <ClInclude Include="Headers\stb_image.h" />
-    <ClInclude Include="Headers\Vector3.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BlinnPhong.fs" />

@@ -1,8 +1,5 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-#include <iostream>
-
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
 #include "Headers/stb_image.h"
@@ -14,8 +11,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
 
-void makeLight(unsigned int VBO, unsigned int VAO, const std::vector<float> data);
-
 int setUp();
 void cleanUp();
 
@@ -25,7 +20,7 @@ const unsigned int SCR_HEIGHT = 1080;
 GLFWwindow* window;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f)); // Closer to the sphere
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f)); 
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -39,10 +34,6 @@ float farPlane = 1000.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-
 int main()
 {
     if (!setUp())
@@ -52,18 +43,8 @@ int main()
     // Compile shaders
     // ---------------
     Shader base_shader("Shaders/BlinnPhong.vs", "Shaders/BlinnPhong.fs");
-    Shader lighting_shader("Shaders/lightCube.vs", "Shaders/lightCube.fs");
+    Shader light_cube_shader("Shaders/lightCube.vs", "Shaders/lightCube.fs");
 
-    // what should my first renderer do
-
-    // I want to be able to say, here is some 3d data,
-    //  positions, normals, and texture coordinates. For a single object or somnething.
-
-    // I want the renderer to do the rest. 
-    // ie, bind the data stuctures, articulate to the gpu what is going on, etc. I dont wanna
-    // see any of this code below basically. 
-
-   
     std::vector<float> vertices = Shapes::getCube();
 
     // BASE DATA
@@ -162,10 +143,9 @@ int main()
         base_shader.setFloat("s_light.linear", 0.09f);
         base_shader.setFloat("s_light.quadratic", 0.032f);
         base_shader.setVec3("s_light.ambient", 0.0f, 0.0f, 0.0f);
-        base_shader.setVec3("s_light.diffuse", 1.0f, 1.0f, 1.0f);
-        base_shader.setVec3("s_light.specular", 1.0f, 1.0f, 1.0f);
+        base_shader.setVec3("s_light.diffuse", 0.5f, 0.0f, 0.5f);
+        base_shader.setVec3("s_light.specular", 0.7f, 0.0f, 0.7f);
     
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuse_map);
         glActiveTexture(GL_TEXTURE1);
@@ -183,15 +163,15 @@ int main()
 
         // Light Cube Shader
         // ---------------
-        glm::mat4 lighting_model = glm::mat4(1.0f);
-        lighting_model = glm::scale(lighting_model, glm::vec3(.5f, .5f, .5f));
-        lighting_model = glm::translate(lighting_model, p_light_position);
+        glm::mat4 model_lighting = glm::mat4(1.0f);
+        model_lighting = glm::scale(model_lighting, glm::vec3(.5f, .5f, .5f));
+        model_lighting = glm::translate(model_lighting, p_light_position);
 
-        lighting_shader.use();
-        lighting_shader.setMat4("model", lighting_model);
+        light_cube_shader.use();
+        light_cube_shader.setMat4("model", model_lighting);
         
-        lighting_shader.setMat4("view", camera.GetViewMatrix());
-        lighting_shader.setMat4("projection", projection);
+        light_cube_shader.setMat4("view", camera.GetViewMatrix());
+        light_cube_shader.setMat4("projection", projection);
 
         // Draw lights
         glBindVertexArray(cubeVAO);
