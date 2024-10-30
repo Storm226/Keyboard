@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <memory>
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
 #include "Headers/stb_image.h"
@@ -48,6 +49,7 @@ int main()
     Shader base_shader("Shaders/BlinnPhong.vs", "Shaders/BlinnPhong.fs");
     Shader light_cube_shader("Shaders/lightCube.vs", "Shaders/lightCube.fs");
 
+    // get geometry, normals, and tex coords
     std::vector<float> vertices = Shapes::getCube();
 
     // BASE DATA
@@ -118,7 +120,7 @@ int main()
         base_shader.setFloat("material.shininess", 32.0f);
 
         // directional light
-        DirectionalLight* d = new DirectionalLight(base_shader);
+        std::unique_ptr<DirectionalLight> d{ new DirectionalLight(base_shader)};
         d->updateShader();
 
         float rotation_speed = .5f;
@@ -128,12 +130,12 @@ int main()
         // point light
         glm::vec3 p_light_position = rotation * glm::vec4(glm::vec3(5.0f, 7.0f, 5.0f), 1.0f);
      
-        PointLight* p = new PointLight(base_shader); // Create a new PointLight instance
+        std::unique_ptr<PointLight> p{ new PointLight(base_shader) };
         p->setPosition(p_light_position);
         p->updateShader();
 
         // spotLight
-        SpotLight* sl = new SpotLight(base_shader);
+        std::unique_ptr<SpotLight> sl{ new SpotLight(base_shader) };
         sl->setDirection(camera.Front);
         sl->setPosition(camera.Position);
         sl->updateShader();
