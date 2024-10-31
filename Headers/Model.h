@@ -11,7 +11,7 @@
 
 class Model {
 public:
-	Model(char* path) { loadModel(path); }
+	Model(const char* path);
 	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma);
 
 	void Draw(Shader& shader);

@@ -53,26 +53,17 @@ int main()
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
-    camera.setSpeed(5.0f);
+    camera.setSpeed(15.0f);
+
+    stbi_set_flip_vertically_on_load(false);
 
     // Compile shaders
     // ---------------
-    Shader base_shader("Shaders/BlinnPhong.vs", "Shaders/BlinnPhong.fs");
-    Shader light_cube_shader("Shaders/lightCube.vs", "Shaders/lightCube.fs");
+    Shader base_shader("Shaders/basic_object_shader.vs", "Shaders/basic_object_shader.fs");
 
-    // get geometry, normals, and tex coords
-    std::vector<float> vertices = Shapes::getCube();
-    std::unique_ptr<Renderer> r{ new Renderer(vertices)};
-    
-    unsigned int diffuse_map, specular_map;
-    generateTexture("Resources/container2.png", diffuse_map, true);
-    generateTexture("Resources/container2_specular.png", specular_map, true);
-    base_shader.use();
-    base_shader.setInt("material.diffuse", 0);
-    base_shader.setInt("material.specular", 1);
+    Model ourModel("Resources/skull/12140_Skull_v3_L2.obj");
 
-
-    // render loop
+    //render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
@@ -85,51 +76,22 @@ int main()
         // Don't forget to use the shader program
         base_shader.use();
 
-        // projection matrix
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, 100.0f);
+        
 
-        base_shader.setVec3("view_position", camera.Position);
-        base_shader.setFloat("material.shininess", 32.0f);
 
-        // directional light
-        std::unique_ptr<DirectionalLight> d{ new DirectionalLight(base_shader)};
-        d->updateShader();
-
-        float rotation_speed = .5f;
-        float angle = rotation_speed * glfwGetTime();
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
-
-        // point light
-        glm::vec3 p_light_position = rotation * glm::vec4(glm::vec3(5.0f, 7.0f, 5.0f), 1.0f);
-     
-        std::unique_ptr<PointLight> p{ new PointLight(base_shader) };
-        p->setPosition(p_light_position);
-        p->updateShader();
-
-        // spotLight
-        std::unique_ptr<SpotLight> sl{ new SpotLight(base_shader) };
-        sl->setDirection(camera.Front);
-        sl->setPosition(camera.Position);
-        sl->updateShader();
-       
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuse_map);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, specular_map);
-
-        // MVP Transformations
-        glm::mat4 model = glm::mat4(1.0f);
-        base_shader.setMat4("model", model);
-        base_shader.setMat4("view", camera.GetViewMatrix());
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
         base_shader.setMat4("projection", projection);
+        base_shader.setMat4("view", view);
 
-        // Draw box
-        r->render();
-
-        // Draw lights
-        setupLightCube(light_cube_shader, p_light_position, projection);
-        r->render();
-
+        // render the loaded model
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -50.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.7f, 0.7f, 0.7f));	// it's a bit too big for our scene, so scale it down
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        base_shader.setMat4("model", model);
+        ourModel.Draw(base_shader);
+       
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -232,6 +194,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
+    std::cout << "getting movement" <<std::endl;
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
