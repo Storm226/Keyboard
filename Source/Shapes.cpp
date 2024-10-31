@@ -1,4 +1,5 @@
 #include "../Headers/Shapes.h"
+#include "../Headers/Mesh.h"
 #include <glm/glm.hpp>
 #include <iostream>
 
@@ -62,7 +63,7 @@ std::vector<float> Shapes::getCube() {
 
 
 std::vector<float> Shapes::getSquarePyramid() {
-    std::vector<Vertex> pyramidVertices = {
+    std::vector<S_Vertex> pyramidVertices = {
         // Base of the pyramid (square)
         { glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec2(0.0f, 0.0f) }, // Bottom-left
         { glm::vec3(1.0f, -1.0f,  1.0f),  glm::vec3(0.0f, -1.0f,  0.0f), glm::vec2(1.0f, 0.0f) }, // Bottom-right

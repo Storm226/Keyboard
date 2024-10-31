@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
 #include "Headers/stb_image.h"
@@ -9,9 +10,12 @@
 #include "Headers/DirectionalLight.h"
 #include "Headers/SpotLight.h"
 #include "Headers/Renderer.h"
+#include "Headers/Model.h"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
