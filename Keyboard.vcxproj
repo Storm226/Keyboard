@@ -71,20 +71,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,6 +152,7 @@
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\defStb.cpp" />
     <ClCompile Include="Source\DirectionalLight.cpp" />
+    <ClCompile Include="Source\Mesh.cpp" />
     <ClCompile Include="Source\PointLight.cpp" />
     <ClCompile Include="Source\Renderer.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
@@ -159,8 +160,9 @@
     <ClCompile Include="Source\SpotLight.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="Headers\Camera.h" />
+    <ClInclude Include="Headers\DirectionalLight.h" />
+    <ClInclude Include="Headers\Mesh.h" />
     <ClInclude Include="Headers\PointLight.h" />
     <ClInclude Include="Headers\Renderer.h" />
     <ClInclude Include="Headers\Shader.h" />
