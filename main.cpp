@@ -76,9 +76,6 @@ int main()
         // Don't forget to use the shader program
         base_shader.use();
 
-        
-
-
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         base_shader.setMat4("projection", projection);
@@ -194,7 +191,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    std::cout << "getting movement" <<std::endl;
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
