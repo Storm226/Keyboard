@@ -81,6 +81,7 @@ int main()
         base_shader.setMat4("projection", projection);
         base_shader.setMat4("view", view);
 
+
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, -50.0f)); // translate it down so it's at the center of the scene
