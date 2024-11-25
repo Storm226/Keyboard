@@ -182,6 +182,8 @@
     <None Include="Shaders\basic_object_shader.vs" />
     <None Include="Shaders\BlinnPhong.fs" />
     <None Include="Shaders\BlinnPhong.vs" />
+    <None Include="Shaders\blinnPhong1.fs" />
+    <None Include="Shaders\blinnPhong1.vs" />
     <None Include="Shaders\lightCube.fs" />
     <None Include="Shaders\lightCube.vs" />
   </ItemGroup>

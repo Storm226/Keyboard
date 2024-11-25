@@ -197,3 +197,9 @@ unsigned int Model::TextureFromFile(const char* path, const std::string & direct
 
     return textureID;
 }
+
+
+void Model::reportTextures() {
+    for (const auto& tex : textures_loaded)
+        std::cout << tex.id << std::endl;
+}

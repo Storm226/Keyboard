@@ -112,6 +112,12 @@
     <None Include="Shaders\basic_object_shader.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\blinnPhong1.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\blinnPhong1.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\container.jpg">

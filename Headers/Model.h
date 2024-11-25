@@ -16,6 +16,8 @@ public:
 
 	void Draw(Shader& shader);
 
+	void reportTextures();
+
 	
 
 private:

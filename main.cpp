@@ -32,16 +32,19 @@ void cleanUp();
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+const float aspectRatio = (float) SCR_WIDTH /  (float) SCR_HEIGHT;
+
 GLFWwindow* window;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f)); 
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f)); 
+float cameraSpeed = 15.0f;
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Frustum stuff
+// Frustum 
 float nearPlane = 1.0f;
 float farPlane = 1000.0f;
 
@@ -53,15 +56,26 @@ int main()
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
-    camera.setSpeed(15.0f);
+    camera.setSpeed(cameraSpeed);
 
     stbi_set_flip_vertically_on_load(false);
+
+    std::string dinoPath = "Resources/T-Rex/T-Rex Model.obj";
+    std::string skullPath = "Resources/skull/12140_Skull_v3_L2.obj";
 
     // Compile shaders
     // ---------------
     Shader base_shader("Shaders/basic_object_shader.vs", "Shaders/basic_object_shader.fs");
+    Shader shader2("Shaders/blinnPhong1.vs", "Shaders/blinnPhong1.fs");
 
-    Model ourModel("Resources/skull/12140_Skull_v3_L2.obj");
+
+    Model dino(dinoPath.c_str());
+    Model skull(skullPath.c_str());
+
+
+    skull.reportTextures();
+    
+
 
     //render loop
     // -----------
@@ -76,19 +90,26 @@ int main()
         // Don't forget to use the shader program
         base_shader.use();
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), aspectRatio, nearPlane, farPlane);
         glm::mat4 view = camera.GetViewMatrix();
         base_shader.setMat4("projection", projection);
         base_shader.setMat4("view", view);
 
 
         // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -50.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.7f, 0.7f, 0.7f));	// it's a bit too big for our scene, so scale it down
-        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        base_shader.setMat4("model", model);
-        ourModel.Draw(base_shader);
+        glm::mat4 dinoModel = glm::mat4(1.0f);
+        dinoModel = glm::translate(dinoModel, glm::vec3(0.0f, 0.0f, 00.0f)); // translate it down so it's at the center of the scene
+        dinoModel = glm::scale(dinoModel, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
+        
+        glm::mat4 skullModel = glm::mat4(1.0f);
+        skullModel = glm::translate(skullModel, glm::vec3(0.0f, 0.0f, -50.0f));
+        skullModel = glm::scale(skullModel, glm::vec3(0.5f, 0.5f, 0.5f));
+        skullModel = glm::rotate(skullModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        base_shader.setMat4("model", skullModel);
+
+
+        skull.Draw(base_shader);
        
         glfwSwapBuffers(window);
         glfwPollEvents();
