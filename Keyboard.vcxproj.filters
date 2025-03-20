@@ -42,6 +42,9 @@
     <ClCompile Include="Source\SpotLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\lodepng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h">
@@ -80,6 +83,12 @@
     <ClInclude Include="Headers\definitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\stb_image_write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\lodepng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BlinnPhong.fs">
@@ -98,6 +107,18 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\5610blinn.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\depGen.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\depGen.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\shadowmap.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\shadowmap.vs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

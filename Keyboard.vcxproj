@@ -156,6 +156,7 @@
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\defStb.cpp" />
     <ClCompile Include="Source\DirectionalLight.cpp" />
+    <ClCompile Include="Source\lodepng.cpp" />
     <ClCompile Include="Source\PointLight.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\SpotLight.cpp" />
@@ -169,10 +170,12 @@
     <ClInclude Include="Headers\cyVector.h" />
     <ClInclude Include="Headers\definitions.h" />
     <ClInclude Include="Headers\DirectionalLight.h" />
+    <ClInclude Include="Headers\lodepng.h" />
     <ClInclude Include="Headers\PointLight.h" />
     <ClInclude Include="Headers\Shader.h" />
     <ClInclude Include="Headers\SpotLight.h" />
     <ClInclude Include="Headers\stb_image.h" />
+    <ClInclude Include="Headers\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\5610blinn.fs" />
@@ -181,6 +184,10 @@
     <None Include="Shaders\basic_object_shader.vs" />
     <None Include="Shaders\BlinnPhong.fs" />
     <None Include="Shaders\BlinnPhong.vs" />
+    <None Include="Shaders\depGen.fs" />
+    <None Include="Shaders\depGen.vs" />
+    <None Include="Shaders\shadowmap.fs" />
+    <None Include="Shaders\shadowmap.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg" />

@@ -7,18 +7,19 @@
 #include "Headers/PointLight.h"
 #include "Headers/DirectionalLight.h"
 #include "Headers/SpotLight.h"
+#include "Headers/lodepng.h"
 
 #include "Headers/cyGL.h"
 #include "Headers/cyTriMesh.h"
 #include "Headers/cyVector.h"
 #include "Headers/definitions.h"
 
-
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
- 
+
 void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool normal, bool tex_coords);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -32,7 +33,6 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
 void setupMVP(Shader&s, SpotLight& p);
 void append_plane(std::vector<glm::vec3>& vertices, cy::TriMesh& m);
-void testDepthMap(std::vector<glm::vec3>& vertices, cy::TriMesh mesh, GLuint obj_VAO, GLuint obj_VBO);
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -68,67 +68,109 @@ int main(int argc, char** argv)
 
     // Compile shaders
     // ---------------
-  // Shader base_shader("Shaders/basic_object_shader.vs", "Shaders/basic_object_shader.fs");
-    Shader blinn("Shaders/5610blinn.vs", "Shaders/5610blinn.fs");
-
+    Shader shadowmapping("Shaders/shadowmap.vs", "Shaders/shadowmap.fs");
+    Shader depthGen("Shaders/depGen.vs", "Shaders/depGen.fs");
 
     cy::TriMesh mesh;
-    
     GLuint obj_VAO, obj_VBO, cube_VAO, cube_VBO, plane_VAO, plane_VBO;
     std::vector<glm::vec3> vertices;
+
+
     if (mesh.LoadFromFileObj(obj_path.c_str()))
         std::cout << "Model successfully loaded \n";
 
     convert_to_vector(mesh, vertices, true, true);
     append_plane(vertices, mesh);
-
     populate_buffer(obj_VAO, obj_VBO, vertices, 1, 1);
 
-    //render loop
-    // -----------
-    while (!glfwWindowShouldClose(window))
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //render loop
+        // ----------------------------------
+        while (!glfwWindowShouldClose(window))
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+            float currentFrame = static_cast<float>(glfwGetTime());
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
 
-        processInput(window);
+            processInput(window);
        
-        // Don't forget to use the shader program
-        blinn.use();
-        //SpotLight p(blinn, glm::vec3(0.0f, 30.0f, 40.0f), glm::vec3(0.0f), COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 3.0f, 3.0f, 0.2f);
-        SpotLight p(blinn);
-        p.setPosition(glm::vec3(0.0f, 30.0f, 40.0f));
-        p.setDirection(glm::vec3(0.0f));
+            // Don't forget to use the shader program
+            shadowmapping.use();
+            //SpotLight p(blinn, glm::vec3(0.0f, 30.0f, 40.0f), glm::vec3(0.0f), COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 3.0f, 3.0f, 0.2f);
+            SpotLight p(shadowmapping);
+            p.setPosition(glm::vec3(0.0f, 30.0f, 40.0f));
+            p.setDirection(glm::vec3(0.0f));
 
-        // this is setting up mvp for final render pass
-        setupMVP(blinn, p);
+            // this is setting up mvp for final render pass
+            setupMVP(shadowmapping, p);
 
-        // we also need setup lightspace transformations, setting up view volume from lights perspective
-        glm::mat4 lightViewMatrix = glm::lookAt(p.position, glm::vec3(0.0f), camera.Up);
-        glm::mat4 lightProjectionMatrix = glm::perspective(2.0f * p.outerCutOff, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        glm::mat4 MLP = lightProjectionMatrix * lightViewMatrix * glm::mat4(0.5f);
-        testDepthMap(vertices, mesh, obj_VAO, obj_VBO);
-        
-   
-        draw(obj_VAO, vertices);
+            // we also need setup lightspace transformations, setting up view volume from lights perspective
+            glm::mat4 lightViewMatrix = glm::lookAt(p.position, glm::vec3(0.0f), camera.Up);
+            glm::mat4 lightProjectionMatrix = glm::perspective(2.0f * p.outerCutOff, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+            glm::mat4 MLP = lightProjectionMatrix * lightViewMatrix * glm::mat4(0.5f);
+            glm::mat4 mShadow = glm::scale(MLP, glm::vec3(0.5f));
+            mShadow = glm::translate(mShadow, glm::vec3(0.5f, 0.5f, 0.5f));
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+            // Render to texture steps
+            GLint defaultFBO;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
+            GLuint framebuffer;
+            GLuint depthMap;
+            int shadow_width = 1024, shadow_height = 1024;
+
+            glGenFramebuffers(1, &framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            
+            glGenTextures(1, &depthMap);
+            glBindTexture(GL_TEXTURE_2D, depthMap);
+            // allocates space on gpu for texture
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            // note this is shadowmapping step
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMap, NULL);
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                std::cout << "issue with framebuffer" << std::endl;
+
+
+            // render the depth map
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+                glViewport(0, 0, shadow_width, shadow_height);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                depthGen.use();
+                glUniformMatrix4fv(glGetUniformLocation(depthGen.ID, "mvp"), 1, GL_FALSE, glm::value_ptr(MLP));
+                draw(obj_VAO, vertices);
+                
+
+            // render the camera view
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFBO);
+                glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                shadowmapping.use();
+                glUniform1i(glGetUniformLocation(shadowmapping.ID, "depthMap"), 1);
+                glUniformMatrix4fv(glGetUniformLocation(shadowmapping.ID, "matrixShadow"), 1, GL_FALSE, glm::value_ptr(mShadow));
+
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, depthMap);
+
+                draw(obj_VAO, vertices);
+
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
 
     cleanUp();
 
     return 0;
 }
 
-void testDepthMap(std::vector<glm::vec3>& vertices, cy::TriMesh mesh, GLuint obj_VAO, GLuint obj_VBO) {
-        vertices.clear();
-        append_plane(vertices, mesh);
-        populate_buffer(obj_VAO, obj_VBO, vertices, 1, 1);
-}
+
 
 void setupMVP(Shader& s, SpotLight& p) {
     glm::mat4 mvp = glm::mat4(0.5f);
