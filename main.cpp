@@ -61,7 +61,7 @@ int main()
     stbi_set_flip_vertically_on_load(false);
 
     std::string dinoPath = "Resources/T-Rex/T-Rex Model.obj";
-    std::string skullPath = "Resources/skull/12140_Skull_v3_L2.obj";
+    std::string skullPath = "Resources/teapot.obj";
 
     // Compile shaders
     // ---------------
