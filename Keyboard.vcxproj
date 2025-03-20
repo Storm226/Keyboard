@@ -156,43 +156,25 @@
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\defStb.cpp" />
     <ClCompile Include="Source\DirectionalLight.cpp" />
-    <ClCompile Include="Source\Mesh.cpp" />
-    <ClCompile Include="Source\Model.cpp" />
     <ClCompile Include="Source\PointLight.cpp" />
-    <ClCompile Include="Source\Renderer.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
-    <ClCompile Include="Source\Shapes.cpp" />
     <ClCompile Include="Source\SpotLight.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Headers\Camera.h" />
     <ClInclude Include="Headers\DirectionalLight.h" />
-    <ClInclude Include="Headers\Mesh.h" />
-    <ClInclude Include="Headers\Model.h" />
     <ClInclude Include="Headers\PointLight.h" />
-    <ClInclude Include="Headers\Renderer.h" />
     <ClInclude Include="Headers\Shader.h" />
-    <ClInclude Include="Headers\Shapes.h" />
     <ClInclude Include="Headers\SpotLight.h" />
     <ClInclude Include="Headers\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\backpack\backpack.mtl" />
     <None Include="Shaders\basic_object_shader.fs" />
     <None Include="Shaders\basic_object_shader.vs" />
     <None Include="Shaders\BlinnPhong.fs" />
     <None Include="Shaders\BlinnPhong.vs" />
-    <None Include="Shaders\blinnPhong1.fs" />
-    <None Include="Shaders\blinnPhong1.vs" />
-    <None Include="Shaders\lightCube.fs" />
-    <None Include="Shaders\lightCube.vs" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\backpack\ao.jpg" />
-    <Image Include="Resources\backpack\diffuse.jpg" />
-    <Image Include="Resources\backpack\normal.png" />
-    <Image Include="Resources\backpack\roughness.jpg" />
-    <Image Include="Resources\backpack\specular.jpg" />
     <Image Include="Resources\container.jpg" />
     <Image Include="Resources\container2.png" />
     <Image Include="Resources\container2_specular.png" />
@@ -200,14 +182,6 @@
     <Image Include="Resources\math.jpg" />
     <Image Include="Resources\matrix.jpg" />
     <Image Include="Resources\Winky.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Resources\backpack\backpack.obj">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </Object>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

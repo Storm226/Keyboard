@@ -5,12 +5,9 @@
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
 #include "Headers/stb_image.h"
-#include "Headers/Shapes.h"
 #include "Headers/PointLight.h"
 #include "Headers/DirectionalLight.h"
 #include "Headers/SpotLight.h"
-#include "Headers/Renderer.h"
-#include "Headers/Model.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -60,21 +57,11 @@ int main()
 
     stbi_set_flip_vertically_on_load(false);
 
-    std::string dinoPath = "Resources/T-Rex/T-Rex Model.obj";
-    std::string skullPath = "Resources/teapot.obj";
+    std::string obj_path = "Resources/T-Rex/T-Rex Model.obj";
 
     // Compile shaders
     // ---------------
     Shader base_shader("Shaders/basic_object_shader.vs", "Shaders/basic_object_shader.fs");
-    Shader shader2("Shaders/blinnPhong1.vs", "Shaders/blinnPhong1.fs");
-
-
-    Model dino(dinoPath.c_str());
-    Model skull(skullPath.c_str());
-
-
-    skull.reportTextures();
-    
 
 
     //render loop
@@ -90,27 +77,8 @@ int main()
         // Don't forget to use the shader program
         base_shader.use();
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), aspectRatio, nearPlane, farPlane);
-        glm::mat4 view = camera.GetViewMatrix();
-        base_shader.setMat4("projection", projection);
-        base_shader.setMat4("view", view);
 
 
-        // render the loaded model
-        glm::mat4 dinoModel = glm::mat4(1.0f);
-        dinoModel = glm::translate(dinoModel, glm::vec3(0.0f, 0.0f, 00.0f)); // translate it down so it's at the center of the scene
-        dinoModel = glm::scale(dinoModel, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
-        
-        glm::mat4 skullModel = glm::mat4(1.0f);
-        skullModel = glm::translate(skullModel, glm::vec3(0.0f, 0.0f, -50.0f));
-        skullModel = glm::scale(skullModel, glm::vec3(0.5f, 0.5f, 0.5f));
-        skullModel = glm::rotate(skullModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        base_shader.setMat4("model", skullModel);
-
-
-        skull.Draw(base_shader);
-       
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -266,15 +234,4 @@ void generateTexture(std::string filename, unsigned int& textureName, bool alpha
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-}
-
-void setupLightCube(Shader& light_cube_shader, glm::vec3& p_light_position, glm::mat4& projection) {
-    glm::mat4 model_lighting = glm::mat4(1.0f);
-    model_lighting = glm::scale(model_lighting, glm::vec3(.5f, .5f, .5f));
-    model_lighting = glm::translate(model_lighting, p_light_position);
-
-    light_cube_shader.use();
-    light_cube_shader.setMat4("model", model_lighting);
-    light_cube_shader.setMat4("view", camera.GetViewMatrix());
-    light_cube_shader.setMat4("projection", projection);
 }
