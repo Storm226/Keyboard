@@ -119,24 +119,28 @@ int main(int argc, char** argv)
             GLuint depthMap;
             int shadow_width = 1024, shadow_height = 1024;
 
-            glGenFramebuffers(1, &framebuffer);
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            
-            glGenTextures(1, &depthMap);
-            glBindTexture(GL_TEXTURE_2D, depthMap);
-            // allocates space on gpu for texture
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        
 
-            // note this is shadowmapping step
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMap, NULL);
-            glDrawBuffer(GL_NONE);
-            glReadBuffer(GL_NONE);
 
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-                std::cout << "issue with framebuffer" << std::endl;
+
+            // Generate the frame buffer and depth map
+                glGenFramebuffers(1, &framebuffer);
+                glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);       
+                glGenTextures(1, &depthMap);
+                glBindTexture(GL_TEXTURE_2D, depthMap);
+                // allocates space on gpu for texture
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+                // note this is shadowmapping step
+                //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+                glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMap, NULL);
+                glDrawBuffer(GL_NONE);
+                glReadBuffer(GL_NONE);
+
+                if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                    std::cout << "issue with framebuffer" << std::endl;
 
 
             // render the depth map

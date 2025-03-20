@@ -13,7 +13,6 @@ uniform sampler2D depthMap;
 in vec3 surface_normal;
 in vec3 fragment_position;
 in vec3 light_pos_out;
-//in vec2 tex_coord;
 
 in vec4 lightView_Position;
 
@@ -25,15 +24,15 @@ void main() {
     // Normalize input vectors
     vec3 s_n = normalize(surface_normal);
     vec3 l_dir = normalize(light_pos_out - fragment_position);
-    vec3 v_dir = normalize(view_dir); // Ensure view direction is normalized
+    vec3 v_dir = normalize(view_dir); 
 
     // Diffuse component
     float diffuse = max(dot(s_n, l_dir), 0.0);
     vec3 diffuse_color = k_d * light_clr * diffuse;
 
     // Blinn-Phong Specular component
-    vec3 half_vector = normalize(v_dir + l_dir); // Halfway vector
-    float spec = pow(max(dot(s_n, half_vector), 0.0), 32); // Shininess of 32
+    vec3 half_vector = normalize(v_dir + l_dir); 
+    float spec = pow(max(dot(s_n, half_vector), 0.0), 32); 
     vec3 specular_color = k_s * light_clr * spec;
 
     // Ambient component
@@ -46,7 +45,7 @@ void main() {
     vec3 p = lightView_Position.xyz / lightView_Position.w;
 
    // ALEX i know im getting some seemingly valid values for p
-   //FragColor = vec4(p.x, 0.0, 0.0, 1);
+   //FragColor = vec4(p.x, p.y, 0, 1);
 
     FragColor = vec4(output_color,1) * (texture(depthMap, p.xy).r < p.z ? 0.0 : 1.0);
 
