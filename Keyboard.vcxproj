@@ -175,12 +175,8 @@
     <None Include="Shaders\BlinnPhong.vs" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\container.jpg" />
-    <Image Include="Resources\container2.png" />
-    <Image Include="Resources\container2_specular.png" />
     <Image Include="Resources\huh.jpg" />
     <Image Include="Resources\math.jpg" />
-    <Image Include="Resources\matrix.jpg" />
     <Image Include="Resources\Winky.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -78,22 +78,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\container.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Resources\container2.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Resources\container2_specular.png">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="Resources\huh.jpg">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Resources\math.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Resources\matrix.jpg">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Resources\Winky.png">
