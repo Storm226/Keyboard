@@ -25,13 +25,18 @@ public:
     // Setters for position and direction, if needed
     void setPosition(const glm::vec3& newPosition);
     void setDirection(const glm::vec3& newDirection);
+    const glm::vec3 getPosition();
+    const glm::vec3 getDiffuseColor();
+
+    glm::vec3 position;
+    glm::vec3 direction;
+    float outerCutOff;
 
 private:
     Shader& s;
-    glm::vec3 position;
-    glm::vec3 direction;
+    
     float cutOff;
-    float outerCutOff;
+    
     float constant;
     float linear;
     float quadratic;

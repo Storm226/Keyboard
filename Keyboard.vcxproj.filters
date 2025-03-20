@@ -62,6 +62,24 @@
     <ClInclude Include="Headers\DirectionalLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Headers\cyCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\cyGL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\cyMatrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\cyTriMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\cyVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BlinnPhong.fs">
@@ -74,6 +92,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\basic_object_shader.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\5610blinn.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\5610blinn.vs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

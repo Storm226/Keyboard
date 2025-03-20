@@ -23,6 +23,8 @@ public:
     void setPosition(const glm::vec3& newPosition);
     glm::vec3 getPosition() const;
 
+    glm::vec3 getDiffuseColor() const;
+
 private:
     Shader& s; 
     glm::vec3 position;

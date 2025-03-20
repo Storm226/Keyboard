@@ -14,18 +14,6 @@ struct Directional_Light{
     vec3 specular;
 };
 
-struct Point_Light{
-    vec3 position;
-
-    // Attenuation
-    float constant;
-    float linear;
-    float quadratic; 
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
 
 struct Spot_Light{
     vec3 position;
@@ -45,7 +33,6 @@ struct Spot_Light{
 };
 
 vec3 calculateDirectionalLight(Directional_Light light, vec3 surface_normal, vec3 view_direction);
-vec3 calculatePointLight(Point_Light light, vec3 surface_normal, vec3 fragment_position, vec3 view_direction);
 vec3 calculateSpotLight(Spot_Light light, vec3 surface_normal, vec3 fragment_position, vec3 view_direction);
 
 
@@ -75,8 +62,6 @@ void main()
 
    // Directional Lighting
    result = calculateDirectionalLight(d_light, surface_normal, view_direction);
-   // Point Lighting
-   result += calculatePointLight(p_light, surface_normal, fragment_position, view_direction);
    // Spot Lighting
    result += calculateSpotLight(s_light, surface_normal, fragment_position, view_direction);
 
@@ -96,27 +81,6 @@ vec3 calculateDirectionalLight(Directional_Light light, vec3 surface_normal, vec
     vec3 specular = light.specular * spec * vec3(texture(material.specular,TexCoord));
     return ambient + diffuse + specular;
 }
-
-//// Point Light
-
-vec3 calculatePointLight(Point_Light light, vec3 surface_normal, vec3 fragment_position, vec3 view_direction){
-    vec3 light_direction = normalize(light.position - fragment_position);
-
-    float diff = max(dot(surface_normal, light_direction), 0);
-
-    vec3 reflection_direction = reflect(-light_direction, surface_normal);
-    float spec = pow(max(dot(view_direction, reflection_direction),0), material.shininess);
-
-    float distance = length(light.position - fragment_position);
-    float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoord));
-
-    return (ambient + diffuse + specular) * attenuation ;
-}
-
 
 //// Spot Light
 

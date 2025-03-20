@@ -39,3 +39,11 @@ void SpotLight::setPosition(const glm::vec3& newPosition) {
 void SpotLight::setDirection(const glm::vec3& newDirection) {
     direction = newDirection;
 }
+
+const glm::vec3 SpotLight::getDiffuseColor() {
+    return diffuse;
+}
+
+const glm::vec3 SpotLight::getPosition() {
+    return position;
+}
