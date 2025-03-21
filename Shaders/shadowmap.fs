@@ -47,6 +47,14 @@ void main() {
    // ALEX i know im getting some seemingly valid values for p
    //FragColor = vec4(p.x, p.y, 0, 1);
 
-    FragColor = vec4(output_color,1) * (texture(depthMap, p.xy).r < p.z ? 0.0 : 1.0);
+   float currentDepth = p.z;
+   float closestDepth = texture(depthMap, p.xy).r;
+
+   float bias = 0.0005;
+   //float bias = max(0.0005 * (1.0 - dot(s_n, l_dir)), 0.005);  
+   float shadow = currentDepth - bias < closestDepth  ? 1.0 : 0.0;      
+    
+
+    FragColor = vec4(output_color,1) * shadow;
 
 }
