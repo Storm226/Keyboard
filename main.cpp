@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
     GLuint framebuffer;
     GLuint depthMap;
-    int shadow_width = SCR_WIDTH, shadow_height = SCR_HEIGHT;
+    int shadow_width = 2* SCR_WIDTH, shadow_height = 2*SCR_HEIGHT;
 
     // Generate the frame buffer and depth map
     glGenFramebuffers(1, &framebuffer);
@@ -97,8 +97,8 @@ int main(int argc, char** argv)
     glBindTexture(GL_TEXTURE_2D, depthMap);
     // allocates space on gpu for texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     // note this is shadowmapping step
     //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -127,19 +127,18 @@ int main(int argc, char** argv)
             processInput(window);
        
             // Don't forget to use the shader program
-            shadowmapping.use();
-            //SpotLight p(blinn, glm::vec3(0.0f, 30.0f, 40.0f), glm::vec3(0.0f), COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 3.0f, 3.0f, 0.2f);
-           
+            shadowmapping.use();           
 
             // this is setting up mvp for final render pass
             setupMVP(shadowmapping, p);
+            float bias = 0.00025;
 
             // we also need setup lightspace transformations, setting up view volume from lights perspective
             glm::mat4 lightViewMatrix = glm::lookAt(p.position, glm::vec3(0.0f), camera.Up);
             glm::mat4 lightProjectionMatrix = glm::perspective(2.0f * p.outerCutOff, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
             glm::mat4 MLP = lightProjectionMatrix * lightViewMatrix;
             glm::mat4 mShadow = MLP;
-            glm::mat4 T = glm::translate(glm::mat4(1.0), glm::vec3(0.5f, 0.5f, 0.5f));
+            glm::mat4 T = glm::translate(glm::mat4(1.0), glm::vec3(0.5f, 0.5f, 0.5f - bias));
             glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
             mShadow = T * S * mShadow;
 
