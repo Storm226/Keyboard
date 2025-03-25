@@ -29,6 +29,7 @@ void main() {
     // Diffuse component
     float diffuse = max(dot(s_n, l_dir), 0.0);
     vec3 diffuse_color = k_d * light_clr * diffuse;
+    //diffuse_color = vec3(.7, 0.15,.8);
 
     // Blinn-Phong Specular component
     vec3 half_vector = normalize(v_dir + l_dir); 

@@ -16,3 +16,7 @@ void DirectionalLight::updateShader() {
     s.setVec3("d_light.diffuse", diffuse);
     s.setVec3("d_light.specular", specular);
 }
+
+void DirectionalLight::setColor(glm::vec3 clr) {
+    diffuse = clr;
+}

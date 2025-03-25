@@ -12,9 +12,11 @@ public:
         const glm::vec3& ambient = glm::vec3(0.05f),
         const glm::vec3& diffuse = glm::vec3(1.0f),
         const glm::vec3& specular = glm::vec3(1.0f));
+        
 
     // Method to update shader values
     void updateShader();
+    void setColor( glm::vec3 clr);
 
 private:
     Shader& s;

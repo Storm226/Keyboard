@@ -47,3 +47,8 @@ const glm::vec3 SpotLight::getDiffuseColor() {
 const glm::vec3 SpotLight::getPosition() {
     return position;
 }
+void SpotLight::setColor(glm::vec3 clr) {
+    diffuse = clr;
+    ambient = clr;
+    specular = clr;
+}

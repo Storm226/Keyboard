@@ -21,6 +21,7 @@ public:
 
     // Method to update shader values
     void updateShader();
+    void setColor(glm::vec3 clr);
 
     // Setters for position and direction, if needed
     void setPosition(const glm::vec3& newPosition);

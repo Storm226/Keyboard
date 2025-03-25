@@ -26,3 +26,42 @@
 #define COLOR_TEAL        glm::vec3(0.0f, 0.5f, 0.5f)
 #define COLOR_INDIGO      glm::vec3(0.29f, 0.0f, 0.51f)
 
+void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool normal, bool tex_coords);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow* window);
+void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
+int setUp();
+void cleanUp();
+void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& vertices,
+    bool normals, bool tex_coords);
+void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
+void setupMVP(Shader& s, SpotLight& p);
+void append_plane(std::vector<glm::vec3>& vertices, cy::TriMesh& m);
+
+
+// settings
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
+const float aspectRatio = (float)SCR_WIDTH / (float)SCR_HEIGHT;
+
+GLFWwindow* window;
+
+// camera
+Camera camera(glm::vec3(40.0f, 30.0f, 55.0f));
+float cameraSpeed = 15.0f;
+
+
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+// Frustum 
+float nearPlane = 1.0f;
+float farPlane = 100.0f;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+

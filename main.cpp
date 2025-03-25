@@ -20,43 +20,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool normal, bool tex_coords);
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
-void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
-int setUp();
-void cleanUp();
-void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& vertices,
-    bool normals, bool tex_coords);
-void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
-void setupMVP(Shader&s, SpotLight& p);
-void append_plane(std::vector<glm::vec3>& vertices, cy::TriMesh& m);
-
-// settings
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
-const float aspectRatio = (float) SCR_WIDTH /  (float) SCR_HEIGHT;
-
-GLFWwindow* window;
-
-// camera
-Camera camera(glm::vec3(40.0f, 30.0f, 55.0f)); 
-float cameraSpeed = 15.0f;
-
-
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
-// Frustum 
-float nearPlane = 1.0f;
-float farPlane = 100.0f;
-
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
 
 int main(int argc, char** argv)
 {
@@ -88,7 +51,8 @@ int main(int argc, char** argv)
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
     GLuint framebuffer;
     GLuint depthMap;
-    int shadow_width = 2* SCR_WIDTH, shadow_height = 2*SCR_HEIGHT;
+    //int shadow_width = 2* SCR_WIDTH, shadow_height = 2*SCR_HEIGHT;
+    int shadow_width = 2048, shadow_height = 2048;
 
     // Generate the frame buffer and depth map
     glGenFramebuffers(1, &framebuffer);
@@ -108,6 +72,7 @@ int main(int argc, char** argv)
 
     SpotLight p(shadowmapping);
     p.setPosition(glm::vec3(0.0f, 30.0f, 40.0f));
+    p.setColor(COLOR_RED);
     p.setDirection(glm::vec3(0.0f));
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -183,8 +148,8 @@ void setupMVP(Shader& s, SpotLight& p) {
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 
 
-    glm::vec3 k_d = COLOR_ORANGE;
-    glm::vec3 k_s = COLOR_WHITE;
+    glm::vec3 k_d = COLOR_GREEN;
+    glm::vec3 k_s = COLOR_GREEN;
 
     glUniform3f(glad_glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
     glUniform3f(glad_glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
