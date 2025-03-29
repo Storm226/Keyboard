@@ -1,0 +1,18 @@
+
+
+#version 460 core
+
+
+// Inputs from vertex shader
+in vec3 fragment_position;
+in vec3 tex_coord;
+
+// Output color
+out vec4 FragColor;
+
+void main() {
+
+
+    FragColor = vec4(1.0,1.0,0.0, 1);
+
+}

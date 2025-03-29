@@ -121,6 +121,21 @@
     <None Include="Shaders\shadowmap.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\normal_mapping.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\normal_mapping.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\geo.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\geo.vs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\geo.gs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg">
@@ -130,6 +145,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Resources\Winky.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\teapot_normal.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

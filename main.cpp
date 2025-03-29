@@ -9,7 +9,6 @@
 #include "Headers/SpotLight.h"
 #include "Headers/lodepng.h"
 
-#include "Headers/cyGL.h"
 #include "Headers/cyTriMesh.h"
 #include "Headers/cyVector.h"
 #include "Headers/definitions.h"
@@ -21,63 +20,45 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+#define PRINT std::cout<<
+
+bool x = true;
+
+
 int main(int argc, char** argv)
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
   
+    load_image(normal_map, nrm_map_path);
 
-    std::string obj_path = "Resources/teapot.obj";
+    GLuint normal_map_tex;
+    
+    glGenTextures(1, &normal_map_tex);
+    glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, normal_map.data());
+
+
 
     // Compile shaders
     // ---------------
-    Shader shadowmapping("Shaders/shadowmap.vs", "Shaders/shadowmap.fs");
-    Shader depthGen("Shaders/depGen.vs", "Shaders/depGen.fs");
+    Shader s("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
+    Shader geo("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs");
 
-    cy::TriMesh mesh;
-    GLuint obj_VAO, obj_VBO, cube_VAO, cube_VBO, plane_VAO, plane_VBO;
+    s.use();
+    SpotLight p(s);
+    p.setPosition(glm::vec3(0.0f, 10.0f, -10.0f));
+    GLuint obj_VAO, obj_VBO;
     std::vector<glm::vec3> vertices;
 
-
-    if (mesh.LoadFromFileObj(obj_path.c_str()))
-        std::cout << "Model successfully loaded \n";
-
-    convert_to_vector(mesh, vertices, true, true);
-    append_plane(vertices, mesh);
-    populate_buffer(obj_VAO, obj_VBO, vertices, 1, 1);
-
-    // Render to texture steps
-    GLint defaultFBO;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
-    GLuint framebuffer;
-    GLuint depthMap;
-    //int shadow_width = 2* SCR_WIDTH, shadow_height = 2*SCR_HEIGHT;
-    int shadow_width = 2048, shadow_height = 2048;
-
-    // Generate the frame buffer and depth map
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    // allocates space on gpu for texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    // note this is shadowmapping step
-    //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMap, NULL);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-
-    SpotLight p(shadowmapping);
-    p.setPosition(glm::vec3(0.0f, 30.0f, 40.0f));
-    p.setColor(COLOR_RED);
-    p.setDirection(glm::vec3(0.0f));
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "issue with framebuffer" << std::endl;
-
+    append_plane(vertices);
+    populate_buffer(obj_VAO, obj_VBO, vertices, true, true);
 
         //render loop
         // ----------------------------------
@@ -91,44 +72,21 @@ int main(int argc, char** argv)
 
             processInput(window);
        
-            // Don't forget to use the shader program
-            shadowmapping.use();           
+            s.use();
+            setupMVP(s, p, false);
 
-            // this is setting up mvp for final render pass
-            setupMVP(shadowmapping, p);
-            float bias = 0.00025;
+            glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+            draw(obj_VAO, vertices);
+           
 
-            // we also need setup lightspace transformations, setting up view volume from lights perspective
-            glm::mat4 lightViewMatrix = glm::lookAt(p.position, glm::vec3(0.0f), camera.Up);
-            glm::mat4 lightProjectionMatrix = glm::perspective(2.0f * p.outerCutOff, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-            glm::mat4 MLP = lightProjectionMatrix * lightViewMatrix;
-            glm::mat4 mShadow = MLP;
-            glm::mat4 T = glm::translate(glm::mat4(1.0), glm::vec3(0.5f, 0.5f, 0.5f - bias));
-            glm::mat4 S = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-            mShadow = T * S * mShadow;
+            if (x) {
 
-
-            // render the depth map
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-                glViewport(0, 0, shadow_width, shadow_height);
-                glClear(GL_DEPTH_BUFFER_BIT);
-                depthGen.use();
-                glUniformMatrix4fv(glGetUniformLocation(depthGen.ID, "mvp"), 1, GL_FALSE, glm::value_ptr(MLP));
-                draw(obj_VAO, vertices);
-                
-
-            // render the camera view
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFBO);
-                glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                shadowmapping.use();
-                glUniform1i(glGetUniformLocation(shadowmapping.ID, "depthMap"), 1);
-                glUniformMatrix4fv(glGetUniformLocation(shadowmapping.ID, "matrixShadow"), 1, GL_FALSE, glm::value_ptr(mShadow));
-
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, depthMap);
+                geo.use();
+                setupMVP(geo, p, true);
 
                 draw(obj_VAO, vertices);
+            }
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -139,33 +97,46 @@ int main(int argc, char** argv)
     return 0;
 }
 
+/// <summary>
+/// Initializes input image vector from filepath 
+/// </summary>
+/// <param name="image"></param>
+/// <param name="filepath"></param>
+void load_image(std::vector<unsigned char>& image, std::string filepath) {
+    unsigned width, height;
+    unsigned error = lodepng::decode(image, width, height, filepath);
+    if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+    else
+        std::cout << "Success loading image from filepath: " << filepath << "\n";
+}
 
 
-void setupMVP(Shader& s, SpotLight& p) {
-    glm::mat4 mvp = glm::mat4(0.5f);
-    glm::mat4 model = glm::mat4(0.5f);
+void setupMVP(Shader& s, SpotLight& p, bool geometry) {
+    glm::mat4 model = glm::mat4(100.0f);
+    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(1, 0, 0));
     glm::mat4 view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-
-
-    glm::vec3 k_d = COLOR_GREEN;
-    glm::vec3 k_s = COLOR_GREEN;
-
-    glUniform3f(glad_glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
-    glUniform3f(glad_glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
-    glUniform3f(glad_glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);
-    glUniform3f(glad_glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
-    glUniform3f(glad_glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
 
 
     glUniformMatrix4fv(glGetUniformLocation(s.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(s.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    glm::vec3 k_d = COLOR_ORANGE;
+    glm::vec3 k_s = COLOR_WHITE;
+
+    if (!geometry) {
+        glUniform3f(glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
+        glUniform3f(glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
+        glUniform3f(glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
+        glUniform3f(glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
+        glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);
+    }
 }
 
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices) {
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size());
+    glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size()/3);
     glBindVertexArray(0);
 }
 
@@ -253,6 +224,7 @@ void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
+    // PRINT "Hello\n";
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -263,10 +235,12 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        x = !x;
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -361,23 +335,27 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
     if (tex_coords) stride += 3; // Texture Coordinates (vec3)
 
     stride *= sizeof(float); // Convert to bytes
+    int layout_loc = 0;
 
     // Position Attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    glVertexAttribPointer(layout_loc, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
     glEnableVertexAttribArray(0);
 
+    layout_loc++;
     int offset = 3 * sizeof(float); // Offset starts after position data
 
     if (normals) {
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(intptr_t)(offset));
+        glVertexAttribPointer(layout_loc, 3, GL_FLOAT, GL_FALSE, stride, (void*)(intptr_t)(offset));
         glEnableVertexAttribArray(1);
         offset += 3 * sizeof(float); // Move offset past normal data
+        layout_loc++;
     }
 
     if (tex_coords) {
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(intptr_t)(offset));
+        glVertexAttribPointer(layout_loc, 3, GL_FLOAT, GL_FALSE, stride, (void*)(intptr_t)(offset));
         glEnableVertexAttribArray(2);
         offset += 3 * sizeof(float); // Move offset past tex
+        layout_loc++; // not necessary
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -385,17 +363,15 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
 }
 
 
-void append_plane(std::vector<glm::vec3>& vertices, cy::TriMesh& m) {
-    if (!m.IsBoundBoxReady())
-        m.ComputeBoundingBox();
+void append_plane(std::vector<glm::vec3>& vertices) {
 
-    cy::Vec3f min = m.GetBoundMin();
-    cy::Vec3f max = m.GetBoundMax();
+    cy::Vec3f min = { -5.0f, -5.0f, 0.0f };
+    cy::Vec3f max = {  5.0f,  5.0f, 0.0f };
 
-    glm::vec3 nearLeft = glm::vec3(min.x, min.y, max.z) * 2.5f; // Near (closer to camera)
-    glm::vec3 nearRight = glm::vec3(max.x, min.y, max.z) * 2.5f;
-    glm::vec3 farLeft = glm::vec3(min.x, min.y, min.z) * 2.5f; // Far (away from camera)
-    glm::vec3 farRight = glm::vec3(max.x, min.y, min.z) * 2.5f;
+    glm::vec3 nearLeft = glm::vec3(min.x, min.y, max.z);
+    glm::vec3 nearRight = glm::vec3(max.x, min.y, max.z);
+    glm::vec3 farLeft = glm::vec3(min.x, max.y, min.z);
+    glm::vec3 farRight = glm::vec3(max.x, max.y, min.z);
 
     glm::vec3 nrm = glm::vec3(0.0f, 1.0f, 0.0f); 
     glm::vec3 texBL = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -412,4 +388,6 @@ void append_plane(std::vector<glm::vec3>& vertices, cy::TriMesh& m) {
     vertices.push_back(nearRight); vertices.push_back(nrm); vertices.push_back(texBR);
     vertices.push_back(farRight); vertices.push_back(nrm); vertices.push_back(texTR);
     vertices.push_back(farLeft); vertices.push_back(nrm); vertices.push_back(texTL);
+
+
 }

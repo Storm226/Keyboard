@@ -186,12 +186,18 @@
     <None Include="Shaders\BlinnPhong.vs" />
     <None Include="Shaders\depGen.fs" />
     <None Include="Shaders\depGen.vs" />
+    <None Include="Shaders\geo.fs" />
+    <None Include="Shaders\geo.gs" />
+    <None Include="Shaders\geo.vs" />
+    <None Include="Shaders\normal_mapping.fs" />
+    <None Include="Shaders\normal_mapping.vs" />
     <None Include="Shaders\shadowmap.fs" />
     <None Include="Shaders\shadowmap.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg" />
     <Image Include="Resources\math.jpg" />
+    <Image Include="Resources\teapot_normal.png" />
     <Image Include="Resources\Winky.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
