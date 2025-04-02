@@ -1,5 +1,5 @@
 ﻿#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
@@ -26,6 +26,7 @@ bool x = true;
 
 int main(int argc, char** argv)
 {
+    //asdf
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
   
