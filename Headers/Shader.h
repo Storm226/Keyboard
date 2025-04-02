@@ -16,7 +16,8 @@ public:
     unsigned int ID;
 
     // constructor generates the shader on the fly
-    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr,
+        const char* tess_controlPath = nullptr, const char* tess_evalPath = nullptr);
 
     // activate the shader
     void use();

@@ -22,7 +22,8 @@
 
 #define PRINT std::cout<<
 
-bool x = true;
+bool geometryPath = 0;
+bool tessPath = 1;
 
 
 int main(int argc, char** argv)
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
     // ---------------
     Shader s("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
     Shader geo("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs");
+    Shader tess("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs", "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
 
     s.use();
     SpotLight p(s);
@@ -79,8 +81,16 @@ int main(int argc, char** argv)
             draw(obj_VAO, vertices);
            
 
-            if (x) {
+            if (tessPath) {
+                tess.use();
+                //Here we are specifying that each set of four verticies refer to a single patch
+                glPatchParameteri(GL_PATCH_VERTICES, 4);
+                setupMVP(geo, p, true);
 
+                draw(obj_VAO, vertices);
+                
+            }
+            else if (geometryPath) {
                 geo.use();
                 setupMVP(geo, p, true);
 
@@ -240,7 +250,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        x = !x;
+        geometryPath = !geometryPath;
 }
 
 // glfw: whenever the mouse moves, this callback is called

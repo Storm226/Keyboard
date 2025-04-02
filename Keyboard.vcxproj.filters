@@ -151,4 +151,12 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\tess_control.txt">
+      <Filter>Shaders</Filter>
+    </Text>
+    <Text Include="Shaders\tess_eval.txt">
+      <Filter>Shaders</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

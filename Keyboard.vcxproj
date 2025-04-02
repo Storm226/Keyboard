@@ -200,6 +200,10 @@
     <Image Include="Resources\teapot_normal.png" />
     <Image Include="Resources\Winky.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\tess_control.txt" />
+    <Text Include="Shaders\tess_eval.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
