@@ -44,6 +44,9 @@ void load_image(std::vector<unsigned char>& image, std::string filepath);
 std::string nrm_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\teapot_normal.png");
 std::vector<unsigned char> normal_map;
 
+std::string noise_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\Perlin_noise_example.png");
+std::vector<unsigned char> noise_map;
+
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;

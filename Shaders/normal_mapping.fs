@@ -39,8 +39,8 @@ void main() {
     // Final color computation
     vec3 output_color = ambient + diffuse_color + specular_color;
 
-    FragColor = vec4(output_color, 1);
+    //FragColor = vec4(output_color, 1);
 
 
-    //FragColor =   texture(tex, tex_coord.xy);
+    FragColor =   texture(tex, tex_coord.xy);
 }

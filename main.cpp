@@ -24,32 +24,29 @@
 
 bool x = true;
 
-
 int main(int argc, char** argv)
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
   
-    load_image(normal_map, nrm_map_path);
+    load_image(noise_map, noise_map_path);
 
-    GLuint normal_map_tex;
-    
-    glGenTextures(1, &normal_map_tex);
-    glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+    GLuint noise_map_texture;
+   
+    glGenTextures(1, &noise_map_texture);
+    glBindTexture(GL_TEXTURE_2D, noise_map_texture);
     // set the texture wrapping/filtering options (on the currently bound texture object)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, normal_map.data());
 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1000, 1000, 0, GL_RGBA, GL_UNSIGNED_BYTE, noise_map.data());
 
 
     // Compile shaders
     // ---------------
     Shader s("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
-    Shader geo("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs");
 
     s.use();
     SpotLight p(s);
@@ -73,19 +70,9 @@ int main(int argc, char** argv)
             processInput(window);
        
             s.use();
+            glBindTexture(GL_TEXTURE_2D, noise_map_texture);
             setupMVP(s, p, false);
-
-            glBindTexture(GL_TEXTURE_2D, normal_map_tex);
             draw(obj_VAO, vertices);
-           
-
-            if (x) {
-
-                geo.use();
-                setupMVP(geo, p, true);
-
-                draw(obj_VAO, vertices);
-            }
 
 
             glfwSwapBuffers(window);
@@ -97,11 +84,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-/// <summary>
-/// Initializes input image vector from filepath 
-/// </summary>
-/// <param name="image"></param>
-/// <param name="filepath"></param>
+
 void load_image(std::vector<unsigned char>& image, std::string filepath) {
     unsigned width, height;
     unsigned error = lodepng::decode(image, width, height, filepath);
@@ -113,7 +96,7 @@ void load_image(std::vector<unsigned char>& image, std::string filepath) {
 
 void setupMVP(Shader& s, SpotLight& p, bool geometry) {
     glm::mat4 model = glm::mat4(100.0f);
-    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 0, 1));
     glm::mat4 view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 

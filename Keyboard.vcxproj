@@ -197,6 +197,7 @@
   <ItemGroup>
     <Image Include="Resources\huh.jpg" />
     <Image Include="Resources\math.jpg" />
+    <Image Include="Resources\Perlin_noise_example.png" />
     <Image Include="Resources\teapot_normal.png" />
     <Image Include="Resources\Winky.png" />
   </ItemGroup>
