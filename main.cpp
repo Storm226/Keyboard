@@ -22,8 +22,6 @@
 
 #define PRINT std::cout<<
 
-bool x = true;
-
 int main(int argc, char** argv)
 {
     if (!setUp())
