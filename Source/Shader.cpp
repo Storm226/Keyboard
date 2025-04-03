@@ -231,5 +231,10 @@ void Shader::checkCompileErrors(GLuint shader, std::string type)
             glGetProgramInfoLog(shader, 1024, NULL, infoLog);
             std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
         }
+        else
+        {
+            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "NO ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
     }
 }

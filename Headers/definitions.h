@@ -37,12 +37,15 @@ void cleanUp();
 void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& vertices,
     bool normals, bool tex_coords);
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
-void setupMVP(Shader& s, SpotLight& p, bool geometry);
+void setupMVP(Shader& s, SpotLight& p, int type);
 void append_plane(std::vector<glm::vec3>& vertices);
 void load_image(std::vector<unsigned char>& image, std::string filepath);
 
 std::string nrm_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\teapot_normal.png");
 std::vector<unsigned char> normal_map;
+
+std::string height_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\teapot_disp.png");
+std::vector<unsigned char> disp_map;
 
 // settings
 const unsigned int SCR_WIDTH = 1920;

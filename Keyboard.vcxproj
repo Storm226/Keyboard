@@ -193,10 +193,13 @@
     <None Include="Shaders\normal_mapping.vs" />
     <None Include="Shaders\shadowmap.fs" />
     <None Include="Shaders\shadowmap.vs" />
+    <None Include="Shaders\tess.fs" />
+    <None Include="Shaders\tess.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg" />
     <Image Include="Resources\math.jpg" />
+    <Image Include="Resources\teapot_disp.png" />
     <Image Include="Resources\teapot_normal.png" />
     <Image Include="Resources\Winky.png" />
   </ItemGroup>

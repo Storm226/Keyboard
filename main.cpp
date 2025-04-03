@@ -22,7 +22,7 @@
 
 #define PRINT std::cout<<
 
-bool geometryPath = 0;
+bool geometryPath = false;
 bool tessPath = 1;
 
 
@@ -32,8 +32,9 @@ int main(int argc, char** argv)
         std::cout << "FAILURE DURING SETUP\n";
   
     load_image(normal_map, nrm_map_path);
+    load_image(disp_map, height_map_path);
 
-    GLuint normal_map_tex;
+    GLuint normal_map_tex, disp_map_tex;
     
     glGenTextures(1, &normal_map_tex);
     glBindTexture(GL_TEXTURE_2D, normal_map_tex);
@@ -42,19 +43,27 @@ int main(int argc, char** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, normal_map.data());
+
+    glGenTextures(1, &disp_map_tex);
+    glBindTexture(GL_TEXTURE_2D, disp_map_tex);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, disp_map.data());
 
 
 
     // Compile shaders
     // ---------------
-    Shader s("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
+    Shader normal_mapping("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
     Shader geo("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs");
-    Shader tess("Shaders/geo.vs", "Shaders/geo.fs", "Shaders/geo.gs", "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
+    Shader tess("Shaders/tess.vs", "Shaders/tess.fs", nullptr, "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
 
-    s.use();
-    SpotLight p(s);
+    normal_mapping.use();
+    SpotLight p(normal_mapping);
     p.setPosition(glm::vec3(0.0f, 10.0f, -10.0f));
     GLuint obj_VAO, obj_VBO;
     std::vector<glm::vec3> vertices;
@@ -74,18 +83,20 @@ int main(int argc, char** argv)
 
             processInput(window);
        
-            s.use();
-            setupMVP(s, p, false);
+            normal_mapping.use();
+            setupMVP(normal_mapping, p, 1);
 
             glBindTexture(GL_TEXTURE_2D, normal_map_tex);
             draw(obj_VAO, vertices);
            
-
+            // if we have a tesselation path provided, we need to not just draw the plane like in normal mapping but also tesselate it
             if (tessPath) {
                 tess.use();
+                glBindTexture(GL_TEXTURE_2D, disp_map_tex);
+
                 //Here we are specifying that each set of four verticies refer to a single patch
                 glPatchParameteri(GL_PATCH_VERTICES, 4);
-                setupMVP(geo, p, true);
+                setupMVP(tess, p, 2);
 
                 draw(obj_VAO, vertices);
                 
@@ -121,7 +132,9 @@ void load_image(std::vector<unsigned char>& image, std::string filepath) {
 }
 
 
-void setupMVP(Shader& s, SpotLight& p, bool geometry) {
+// 1 for geometry shader
+// 2 for tesselation
+void setupMVP(Shader& s, SpotLight& p, int type) {
     glm::mat4 model = glm::mat4(100.0f);
     model = glm::rotate(model, glm::radians(180.0f), glm::vec3(1, 0, 0));
     glm::mat4 view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
@@ -135,12 +148,19 @@ void setupMVP(Shader& s, SpotLight& p, bool geometry) {
     glm::vec3 k_d = COLOR_ORANGE;
     glm::vec3 k_s = COLOR_WHITE;
 
-    if (!geometry) {
+    if (type == 1) {
         glUniform3f(glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
         glUniform3f(glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
         glUniform3f(glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
         glUniform3f(glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
         glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);
+    }
+    else if (type == 2) {
+        /*glUniform3f(glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
+        glUniform3f(glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
+        glUniform3f(glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
+        glUniform3f(glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
+        glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);*/
     }
 }
 
