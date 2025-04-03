@@ -86,8 +86,8 @@ int main(int argc, char** argv)
             normal_mapping.use();
             setupMVP(normal_mapping, p, 1);
 
-            glBindTexture(GL_TEXTURE_2D, normal_map_tex);
-            draw(obj_VAO, vertices);
+           // glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+           // draw(obj_VAO, vertices);
            
             // if we have a tesselation path provided, we need to not just draw the plane like in normal mapping but also tesselate it
             if (tessPath) {
