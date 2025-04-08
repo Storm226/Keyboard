@@ -40,24 +40,36 @@ void load_image(std::vector<unsigned char>& image, std::string filepath);
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float aspectRatio = (float)SCR_WIDTH / (float)SCR_HEIGHT;
+const float ASPECT_RATIO = (float)SCR_WIDTH / (float)SCR_HEIGHT;
 
+// the window 
 GLFWwindow* window;
 
 // camera
-Camera camera(glm::vec3(8.0f, 2.0f, 8.0f));
 float cameraSpeed = 15.0f;
 
 
+// input stuff
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Frustum 
-float nearPlane = 1.0f;
-float farPlane = 100.0f;
-
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+
+// Water rendering
+
+struct plane {
+    glm::vec3 point;
+    glm::vec3 norm;
+};
+
+// these are the world space positions of our upper and lower planes which 
+// together encaspulate the volume of displaced points
+plane s_upper = { glm::vec3(0.0f,  10.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) };
+plane s_lower = { glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) };
+
+
 

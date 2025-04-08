@@ -23,6 +23,49 @@ int main(int argc, char** argv)
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
 
+    // STEP ONE: 
+    // define the camera and its matrices, and also 
+    // get information needed for projector from camera
+        float zNear = 1.0f;
+        float zFar = 100.0f;
+
+        Camera camera(glm::vec3(8.0f, 2.0f, 8.0f));
+        glm::vec3 camera_direction = camera.Front;
+        float FOV = glm::radians(45.0f);
+
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+
+    // STEP TWO:
+    // determine if any of the displaceable volume is within the camera frustum
+    // if not, don't bother drawing
+        bool worldSpaceIntersection = false;
+
+        float tanFovY = glm::tan(FOV * 0.5f);
+        float nearHeight = 2.0f * zNear * tanFovY;
+        float nearWidth = nearHeight * ASPECT_RATIO;
+        float farHeight = 2.0f * zFar * tanFovY;
+        float farWidth = farHeight * ASPECT_RATIO;
+
+        glm::vec3 frustumCorners[8] = {
+            { -nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Left
+            {  nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Right
+            { -nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Left
+            {  nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Right
+            { -farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Left
+            {  farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Right
+            { -farWidth * 0.5f,  -farHeight * 0.5f, -zFar },  // Far Bottom Left
+            {  farWidth * 0.5f,  -farHeight * 0.5f, -zFar }   // Far Bottom Right
+        };
+
+        // now we need to get those corners into world space by using the inverse viewProjection Matrix
+        glm::mat4 inverse_View = glm::inverse(view);
+        for (int i = 0; i < 8; i++) {
+            frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
+        }
+        
+        // now that we have world space coordinates for the frustum we can actually check 
+        // for intersections against our upper and lower bounding planes
 
 
   
