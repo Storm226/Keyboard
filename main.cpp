@@ -3,14 +3,10 @@
 
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
-#include "Headers/stb_image.h"
-#include "Headers/PointLight.h"
-#include "Headers/DirectionalLight.h"
-#include "Headers/SpotLight.h"
+
 #include "Headers/lodepng.h"
 
-#include "Headers/cyTriMesh.h"
-#include "Headers/cyVector.h"
+
 #include "Headers/definitions.h"
 
 #include <iostream>
@@ -20,41 +16,17 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-#define PRINT std::cout<<
+
 
 int main(int argc, char** argv)
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
+
+
+
   
-    load_image(noise_map, noise_map_path);
-
-    GLuint noise_map_texture;
-   
-    glGenTextures(1, &noise_map_texture);
-    glBindTexture(GL_TEXTURE_2D, noise_map_texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1000, 1000, 0, GL_RGBA, GL_UNSIGNED_BYTE, noise_map.data());
-
-
-    // Compile shaders
-    // ---------------
-    Shader s("Shaders/normal_mapping.vs", "Shaders/normal_mapping.fs");
-
-    s.use();
-    SpotLight p(s);
-    p.setPosition(glm::vec3(0.0f, 10.0f, -10.0f));
-    GLuint obj_VAO, obj_VBO;
-    std::vector<glm::vec3> vertices;
-
-    append_plane(vertices);
-    populate_buffer(obj_VAO, obj_VBO, vertices, true, true);
-
+ 
         //render loop
         // ----------------------------------
         while (!glfwWindowShouldClose(window))
@@ -67,11 +39,7 @@ int main(int argc, char** argv)
 
             processInput(window);
        
-            s.use();
-            glBindTexture(GL_TEXTURE_2D, noise_map_texture);
-            setupMVP(s, p, false);
-            draw(obj_VAO, vertices);
-
+           
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -83,6 +51,8 @@ int main(int argc, char** argv)
 }
 
 
+
+// loads an image into the char array from input filepath
 void load_image(std::vector<unsigned char>& image, std::string filepath) {
     unsigned width, height;
     unsigned error = lodepng::decode(image, width, height, filepath);
@@ -91,36 +61,14 @@ void load_image(std::vector<unsigned char>& image, std::string filepath) {
         std::cout << "Success loading image from filepath: " << filepath << "\n";
 }
 
-
-void setupMVP(Shader& s, SpotLight& p, bool geometry) {
-    glm::mat4 model = glm::mat4(100.0f);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0, 0, 1));
-    glm::mat4 view = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-
-
-    glUniformMatrix4fv(glGetUniformLocation(s.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(glGetUniformLocation(s.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-    glm::vec3 k_d = COLOR_ORANGE;
-    glm::vec3 k_s = COLOR_WHITE;
-
-    if (!geometry) {
-        glUniform3f(glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
-        glUniform3f(glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
-        glUniform3f(glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
-        glUniform3f(glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
-        glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);
-    }
-}
-
+// Draws TRIANGLES using input VAO/vertices
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices) {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size()/3);
     glBindVertexArray(0);
 }
 
+// just sets up the window
 int setUp() {
 
     // glfw: initialize and configure
@@ -136,7 +84,7 @@ int setUp() {
 
     // glfw window creation
     // --------------------
-    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "KeyBoard", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Real Time Water Rendering!", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -159,47 +107,21 @@ int setUp() {
         return -1;
     }
 
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
 
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
     camera.setSpeed(cameraSpeed);
-    stbi_set_flip_vertically_on_load(false);
 
     return 1;
 }
 
+// cleans up the window
 void cleanUp() {
     glfwTerminate();
 }
-void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool normal, bool tex_coords) {
-    for (int i = 0; i < mesh.NF(); i++) { // Loop over faces
-        cy::TriMesh::TriFace face = mesh.F(i); // Vertex indices
 
-        // Get normal and texture coordinate indices (only if needed)
-        cy::TriMesh::TriFace normalFace, texFace;
-        if (normal) normalFace = mesh.FN(i);
-        if (tex_coords) texFace = mesh.FT(i);
-
-        for (int j = 0; j < 3; j++) { // Loop over triangle vertices
-            cy::Vec3f v = mesh.V(face.v[j]); // Vertex position
-            vertices.push_back(glm::vec3(v.x, v.y, v.z));
-
-            if (normal) {
-                cy::Vec3f n = mesh.VN(normalFace.v[j]); // Normal
-                vertices.push_back(glm::vec3(n.x, n.y, n.z));
-            }
-
-            if (tex_coords) {
-                cy::Vec3f t = mesh.VT(texFace.v[j]); // Texture coordinates (3D)
-                vertices.push_back(glm::vec3(t.x, t.y, t.z));
-            }
-        }
-    }
-}
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -220,8 +142,6 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(UP, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        x = !x;
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -266,40 +186,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 
-// Given a filename, a texture name, and t/f flag for alpha, 
-// initializes tecture name = texture(filename);
-// -------------------------------------------------
-void generateTexture(std::string filename, unsigned int& textureName, bool alpha) {
-    glGenTextures(1, &textureName);
-    glBindTexture(GL_TEXTURE_2D, textureName);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load and generate the texture
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load((filename).c_str(), &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        if (!alpha) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-        else {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-}
-
-
+// This function may be useful to us, if we can define the vertices of the projected grid
+// then this function will give us an easy way to bind them to a VAO/VBO object for drawing
 void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& vertices,
     bool normals, bool tex_coords) {
 
@@ -343,32 +231,3 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
     glBindVertexArray(0);
 }
 
-
-void append_plane(std::vector<glm::vec3>& vertices) {
-
-    cy::Vec3f min = { -5.0f, -5.0f, 0.0f };
-    cy::Vec3f max = {  5.0f,  5.0f, 0.0f };
-
-    glm::vec3 nearLeft = glm::vec3(min.x, min.y, max.z);
-    glm::vec3 nearRight = glm::vec3(max.x, min.y, max.z);
-    glm::vec3 farLeft = glm::vec3(min.x, max.y, min.z);
-    glm::vec3 farRight = glm::vec3(max.x, max.y, min.z);
-
-    glm::vec3 nrm = glm::vec3(0.0f, 1.0f, 0.0f); 
-    glm::vec3 texBL = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 texBR = glm::vec3(1.0f, 0.0f, 0.0f);
-    glm::vec3 texTR = glm::vec3(1.0f, 1.0f, 0.0f);
-    glm::vec3 texTL = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    // First Triangle: bottomLeft → bottomRight → topLeft
-    vertices.push_back(nearLeft); vertices.push_back(nrm); vertices.push_back(texBL);
-    vertices.push_back(nearRight); vertices.push_back(nrm); vertices.push_back(texBR);
-    vertices.push_back(farLeft); vertices.push_back(nrm); vertices.push_back(texTL);
-
-    // Second Triangle: bottomRight → topRight → topLeft
-    vertices.push_back(nearRight); vertices.push_back(nrm); vertices.push_back(texBR);
-    vertices.push_back(farRight); vertices.push_back(nrm); vertices.push_back(texTR);
-    vertices.push_back(farLeft); vertices.push_back(nrm); vertices.push_back(texTL);
-
-
-}

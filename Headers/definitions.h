@@ -26,26 +26,16 @@
 #define COLOR_TEAL        glm::vec3(0.0f, 0.5f, 0.5f)
 #define COLOR_INDIGO      glm::vec3(0.29f, 0.0f, 0.51f)
 
-void convert_to_vector(cy::TriMesh& mesh, std::vector<glm::vec3>& vertices, bool normal, bool tex_coords);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-void generateTexture(std::string filename, unsigned int& textureName, bool alpha);
 int setUp();
 void cleanUp();
 void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& vertices,
     bool normals, bool tex_coords);
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
-void setupMVP(Shader& s, SpotLight& p, bool geometry);
-void append_plane(std::vector<glm::vec3>& vertices);
 void load_image(std::vector<unsigned char>& image, std::string filepath);
-
-std::string nrm_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\teapot_normal.png");
-std::vector<unsigned char> normal_map;
-
-std::string noise_map_path("C:\\Users\\18045\\Programming\\src\\Keyboard\\Resources\\Perlin_noise_example.png");
-std::vector<unsigned char> noise_map;
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -53,7 +43,6 @@ const unsigned int SCR_HEIGHT = 1080;
 const float aspectRatio = (float)SCR_WIDTH / (float)SCR_HEIGHT;
 
 GLFWwindow* window;
-
 
 // camera
 Camera camera(glm::vec3(8.0f, 2.0f, 8.0f));
