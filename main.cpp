@@ -22,8 +22,10 @@
 
 #define PRINT std::cout<<
 
-bool geometryPath = false;
+bool geometryPath = 0;
 bool tessPath = 1;
+
+int tessLevel = 1;
 
 
 int main(int argc, char** argv)
@@ -55,6 +57,7 @@ int main(int argc, char** argv)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, disp_map.data());
 
 
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Compile shaders
     // ---------------
@@ -66,10 +69,23 @@ int main(int argc, char** argv)
     SpotLight p(normal_mapping);
     p.setPosition(glm::vec3(0.0f, 10.0f, -10.0f));
     GLuint obj_VAO, obj_VBO;
-    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> vertices = {
+        glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 
+        glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), 
+        glm::vec3(1.0f,  1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), 
+        glm::vec3(-1.0f,  1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)  
+    };
 
-    append_plane(vertices);
-    populate_buffer(obj_VAO, obj_VBO, vertices, true, true);
+    if (!tessPath) {
+        vertices.clear();
+        append_plane(vertices);
+        populate_buffer(obj_VAO, obj_VBO, vertices, true, true);
+    }
+    else {
+        populate_buffer(obj_VAO, obj_VBO, vertices, true , false);
+
+    }
+     
 
         //render loop
         // ----------------------------------
@@ -83,29 +99,36 @@ int main(int argc, char** argv)
 
             processInput(window);
        
-            normal_mapping.use();
-            setupMVP(normal_mapping, p, 1);
+          //  normal_mapping.use();
+          //  setupMVP(normal_mapping, p, 1);
 
-           // glBindTexture(GL_TEXTURE_2D, normal_map_tex);
-           // draw(obj_VAO, vertices);
+         //   glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+           // draw(obj_VAO, vertices, false);
            
             // if we have a tesselation path provided, we need to not just draw the plane like in normal mapping but also tesselate it
             if (tessPath) {
                 tess.use();
+
+                glUniform1i(glGetUniformLocation(tess.ID, "tess_level"), tessLevel);
+
+                glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, disp_map_tex);
+                glUniform1i(glGetUniformLocation(tess.ID, "heightMap"), 0);  // Texture unit 0
 
-                //Here we are specifying that each set of four verticies refer to a single patch
-                glPatchParameteri(GL_PATCH_VERTICES, 4);
-                setupMVP(tess, p, 2);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, normal_map_tex);
+                glUniform1i(glGetUniformLocation(tess.ID, "normalMap"), 1);  // Texture unit 0
 
-                draw(obj_VAO, vertices);
+
+                setupMVP(tess, p, 1);
+                draw(obj_VAO, vertices, true);
                 
             }
             else if (geometryPath) {
                 geo.use();
-                setupMVP(geo, p, true);
+                setupMVP(geo, p, 1);
 
-                draw(obj_VAO, vertices);
+                draw(obj_VAO, vertices, false);
             }
 
 
@@ -156,17 +179,19 @@ void setupMVP(Shader& s, SpotLight& p, int type) {
         glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);
     }
     else if (type == 2) {
-        /*glUniform3f(glGetUniformLocation(s.ID, "k_d"), k_d.x, k_d.y, k_d.z);
-        glUniform3f(glGetUniformLocation(s.ID, "k_s"), k_s.x, k_s.y, k_s.z);
-        glUniform3f(glGetUniformLocation(s.ID, "light_pos"), p.getPosition().x, p.getPosition().y, p.getPosition().z);
-        glUniform3f(glGetUniformLocation(s.ID, "view_dir"), camera.Position.x, camera.Position.y, camera.Position.z);
-        glUniform3f(glGetUniformLocation(s.ID, "light_clr"), p.getDiffuseColor().x, p.getDiffuseColor().y, p.getDiffuseColor().z);*/
+      
     }
 }
 
-void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices) {
+void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices, bool tesselation) {
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size()/3);
+    if (tesselation) {
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
+        glDrawArrays(GL_PATCHES, 0, 4);
+    }
+    else 
+        glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size() / 3);
+    
     glBindVertexArray(0);
 }
 
@@ -271,6 +296,15 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(DOWN, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         geometryPath = !geometryPath;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        tessLevel -= 1;
+        PRINT "detected " << tessLevel << "\n";
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        tessLevel += 1;
+        PRINT "detected " << tessLevel << "\n";
+    }
+      
 }
 
 // glfw: whenever the mouse moves, this callback is called

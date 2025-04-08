@@ -1,18 +1,18 @@
 #version 460 core
 
-layout (vertices = 3) out;
+layout (vertices = 4) out;
 
 in vec3 position[];
 in vec2 tex_coord[];
 
-out vec3 position_control[];
 out vec2 tex_control[];
+
+uniform int tess_level;
 
 
 void main()
 {
 	
-	int tess_level = 25;
 
 	gl_TessLevelOuter[0] = tess_level;
 	gl_TessLevelOuter[1] = tess_level;
@@ -22,8 +22,8 @@ void main()
 	gl_TessLevelInner[0] = tess_level;
 	gl_TessLevelInner[1] = tess_level;
 
+
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 
-	position_control[gl_InvocationID] = position[gl_InvocationID];
 	tex_control[gl_InvocationID] = tex_coord[gl_InvocationID];
 }
