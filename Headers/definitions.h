@@ -36,6 +36,22 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
     bool normals, bool tex_coords);
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
 void load_image(std::vector<unsigned char>& image, std::string filepath);
+bool lineSegmentPlaneIntersection(glm::vec3& contact, glm::vec3 ray, glm::vec3 rayOrigin,
+    glm::vec3 normal, glm::vec3 coord);
+
+
+// TESTS
+void line_plane_ShouldBeTrue1();
+void line_plane_ShouldBeTrue2();
+void line_plane_ShouldBeTrue3();
+void line_plane_ShouldBeTrue4();
+void line_plane_ShouldBeTrue5();
+
+void line_plane_ShouldBeFalse1();
+void line_plane_ShouldBeFalse2();
+void line_plane_ShouldBeFalse3();
+void line_plane_ShouldBeFalse4();
+void line_plane_ShouldBeFalse5();
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -47,7 +63,12 @@ GLFWwindow* window;
 
 // camera
 float cameraSpeed = 15.0f;
+float zNear = 1.0f;
+float zFar = 100.0f;
 
+Camera camera(glm::vec3(8.0f, 2.0f, 8.0f));
+glm::vec3 camera_direction = camera.Front;
+float FOV = glm::radians(45.0f);
 
 // input stuff
 float lastX = SCR_WIDTH / 2.0f;
