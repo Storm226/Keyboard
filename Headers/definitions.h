@@ -70,6 +70,7 @@ float zNear = 1.0f;
 float zFar = 100.0f;
 
 Camera camera(glm::vec3(0.0f, 20.0f, 0.0f));
+Camera projector(glm::vec3(0.0f, 20.0f, 0.0f));
 
 float FOV = glm::radians(45.0f);
 

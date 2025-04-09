@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     // define the camera and its matrices, and also 
     // get information needed for projector from camera
     camera.Front = glm::vec3(0.0f, -1.0f, 0.0f);
-
+    projector.Front = glm::vec3(0.0f, -1.0f, 0.0f);
   
  
         //render loop
@@ -48,6 +48,12 @@ int main(int argc, char** argv)
 
             glm::mat4 view = camera.GetViewMatrix();
             glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+
+            // we also are interested in defining our projector, which is kinda basically a camera
+
+            glm::mat4 projector_view = projector.GetViewMatrix();
+            glm::mat4 M_Projector = glm::inverse(projector_view * perspective);
+            
 
             // STEP TWO:
             // determine if any of the displaceable volume is within the camera frustum
@@ -110,10 +116,54 @@ int main(int argc, char** argv)
                 // Project all points in buffer onto plane
                 // check this math i think it might be slightly off but i cant be fucked rn
                 for (int i = 0; i < intersections.size(); i++) {
+
+                    // if the point is above the plane, we wanna decrease its vertical position
+                    // if the point is below, we wanna increment its position
+                    bool above = intersections[i].y > s_base.point.y;
                     float distance_to_base_plane = intersections[i].y - s_base.point.y;
                     
-                    intersections[i] += s_base.norm * -distance_to_base_plane;
+                    if(above)
+                        intersections[i] -= s_base.norm * distance_to_base_plane;
+                    else
+                        intersections[i] += s_base.norm * distance_to_base_plane;
                 }
+
+                
+                // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
+                // the x and y span of the visible volume is now the x/y spans of the points in the buffer
+
+                float minX = 0, maxX = 0 , minY = 0, maxY = 0;
+
+                // we can do this transformation and also compute the minX/maxX minY/maxY
+                for (int i = 0; i < intersections.size(); i++) {
+                    intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
+
+                    // x span
+                    if (intersections[i].x < minX)
+                        minX = intersections[i].x;
+                    else if (intersections[i].x > maxX)
+                        maxX = intersections[i].x;
+
+                    // y span
+                    if (intersections[i].y < minY)
+                        minY = intersections[i].y;
+                    else if (intersections[i].y > maxY)
+                        maxY = intersections[i].y;
+                }
+
+                // define the range matrix to augment the m_projector matrix
+                glm::mat4 range = glm::mat4(1.0);
+                range[0][0] = maxX - minX;
+                range[0][4] = minX;
+                range[1][1] = maxY - minY;
+                range[1][4] = minY;
+
+                M_Projector = range * M_Projector;
+
+
+                // holy shit we can finally define the fucking vertices that we are gonna pass to shaders 
+                // omg omg omg
+                    
        
            
 
