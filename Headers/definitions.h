@@ -41,6 +41,7 @@ bool lineSegmentPlaneIntersection(glm::vec3& contact, glm::vec3 ray, glm::vec3 r
 
 
 // TESTS
+void line_plane_tests();
 void line_plane_ShouldBeTrue1();
 void line_plane_ShouldBeTrue2();
 void line_plane_ShouldBeTrue3();
