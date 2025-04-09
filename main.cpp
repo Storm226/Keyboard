@@ -24,52 +24,7 @@ int main(int argc, char** argv)
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
 
-    // STEP ONE: 
-    // define the camera and its matrices, and also 
-    // get information needed for projector from camera
    
-
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
-
-    // STEP TWO:
-    // determine if any of the displaceable volume is within the camera frustum
-    // if not, don't bother drawing
-        bool worldSpaceIntersection = false;
-
-        float tanFovY = glm::tan(FOV * 0.5f);
-        float nearHeight = 2.0f * zNear * tanFovY;
-        float nearWidth = nearHeight * ASPECT_RATIO;
-        float farHeight = 2.0f * zFar * tanFovY;
-        float farWidth = farHeight * ASPECT_RATIO;
-
-        glm::vec3 frustumCorners[8] = {
-            { -nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Left
-            {  nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Right
-            { -nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Left
-            {  nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Right
-            { -farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Left
-            {  farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Right
-            { -farWidth * 0.5f,  -farHeight * 0.5f, -zFar },  // Far Bottom Left
-            {  farWidth * 0.5f,  -farHeight * 0.5f, -zFar }   // Far Bottom Right
-        };
-
-        // now we need to get those corners into world space by using the inverse viewProjection Matrix
-        glm::mat4 inverse_View = glm::inverse(view);
-        for (int i = 0; i < 8; i++) {
-            frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
-           // std::cout << frustumCorners[i].x << " , " << frustumCorners[i].y << ", " << frustumCorners[i].z << "\n";
-        }
-
-   
-        // now that we have world space coordinates for the frustum we can actually check 
-        // for intersections against our upper and lower bounding planes
-
-
-        // Check for intersections between the edges of the camera frustum and the bound planes (Supper and
-        // Slower).Store the world - space positions of all intersections in a buffer
-
-
   
   
  
@@ -85,7 +40,63 @@ int main(int argc, char** argv)
 
             processInput(window);
 
-          
+            // STEP ONE: 
+     // define the camera and its matrices, and also 
+     // get information needed for projector from camera
+
+
+            glm::mat4 view = camera.GetViewMatrix();
+            glm::mat4 perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+
+            // STEP TWO:
+            // determine if any of the displaceable volume is within the camera frustum
+            // if not, don't bother drawing
+            bool worldSpaceIntersection = false;
+
+            float tanFovY = glm::tan(FOV * 0.5f);
+            float nearHeight = 2.0f * zNear * tanFovY;
+            float nearWidth = nearHeight * ASPECT_RATIO;
+            float farHeight = 2.0f * zFar * tanFovY;
+            float farWidth = farHeight * ASPECT_RATIO;
+
+            glm::vec3 frustumCorners[8] = {
+                { -nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Left
+                {  nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Right
+                { -nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Left
+                {  nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Right
+                { -farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Left
+                {  farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Right
+                { -farWidth * 0.5f,  -farHeight * 0.5f, -zFar },  // Far Bottom Left
+                {  farWidth * 0.5f,  -farHeight * 0.5f, -zFar }   // Far Bottom Right
+            };
+
+            // now we need to get those corners into world space by using the inverse viewProjection Matrix
+            glm::mat4 inverse_View = glm::inverse(view);
+            for (int i = 0; i < 8; i++) {
+                frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
+                // std::cout << frustumCorners[i].x << " , " << frustumCorners[i].y << ", " << frustumCorners[i].z << "\n";
+            }
+
+
+            // now that we have world space coordinates for the frustum we can actually check 
+            // for intersections against our upper and lower bounding planes
+
+
+            // Check for intersections between the edges of the camera frustum and the bound planes (Supper and
+            // Slower).Store the world - space positions of all intersections in a buffer
+
+            std::vector<glm::vec3> intersections;
+
+            for (int i = 1; i < 8; i++) {
+                glm::vec3 contact;
+                if (lineSegmentPlaneIntersection(contact, frustumCorners[i - 1], frustumCorners[i], s_upper.norm, s_upper.point))
+                    intersections.push_back(contact);
+                if (lineSegmentPlaneIntersection(contact, frustumCorners[i - 1], frustumCorners[i], s_lower.norm, s_lower.point))
+                    intersections.push_back(contact);
+            }
+
+            for (int i = 0; i < intersections.size(); i++)
+                printVec(intersections[i]);
        
            
 
@@ -96,6 +107,11 @@ int main(int argc, char** argv)
     cleanUp();
 
     return 0;
+}
+
+
+void printVec(glm::vec3 v) {
+    std::cout << "x: " << v.x << ", " << "y: " << v.y << ", " << "z: " << v.z << "\n";
 }
 
 bool lineSegmentPlaneIntersection(glm::vec3& contact, glm::vec3 a, glm::vec3 b,
