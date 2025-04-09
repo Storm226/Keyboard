@@ -99,3 +99,5 @@ void Camera::updateCameraVectors()
 void Camera::setSpeed(float new_speed) {
     MovementSpeed = new_speed;
 }
+
+

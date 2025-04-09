@@ -69,8 +69,8 @@ float cameraSpeed = 15.0f;
 float zNear = 1.0f;
 float zFar = 100.0f;
 
-Camera camera(glm::vec3(8.0f, 2.0f, 8.0f));
-glm::vec3 camera_direction = camera.Front;
+Camera camera(glm::vec3(0.0f, 20.0f, 0.0f));
+
 float FOV = glm::radians(45.0f);
 
 // input stuff
@@ -92,8 +92,9 @@ struct plane {
 
 // these are the world space positions of our upper and lower planes which 
 // together encaspulate the volume of displaced points
-plane s_upper = { glm::vec3(0.0f,  10.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) };
-plane s_lower = { glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) };
+plane s_upper = { glm::vec3(0.0f,  10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
+plane s_base = { glm::vec3(0.0f,    0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
+plane s_lower = { glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
 
 
 
