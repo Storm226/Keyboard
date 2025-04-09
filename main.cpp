@@ -163,9 +163,20 @@ int main(int argc, char** argv)
 
                 // holy shit we can finally define the fucking vertices that we are gonna pass to shaders 
                 // omg omg omg
-                    
-       
-           
+                   
+                std::vector<glm::vec3> pre_transform_vertices = 
+                { glm::vec3(0.0f, 0.0f, 0.0f),       // near left    "near" doesn't exist btw
+                  glm::vec3(1.0f, 0.0f, 0.0f),       // near right
+                  glm::vec3(1.0f, 1.0f, 0.0f),       // far left
+                  glm::vec3(1.0f, 1.0f, 0.0f)};      // far right
+            
+                std::vector<glm::vec3> post_transform_vertices;
+
+                // 2.4 step 6 do the doubel transform or w/e
+                for (int i = 0; i < 8; i++) {
+                    post_transform_vertices.push_back()
+                }
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();
