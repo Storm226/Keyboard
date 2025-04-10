@@ -1,44 +1,60 @@
-#version 460 core
+#version 410 core
 
-uniform vec3 k_d;       // Diffuse reflectance
-uniform vec3 k_s;       // Specular reflectance
-uniform vec3 light_clr; // Light color
-uniform vec3 view_dir;  // View direction
+out vec4 color;
 
-// Inputs from vertex shader
-in vec3 fragment_position;
-in vec3 tex_coord;
-in vec3 light_pos_out;
+in vec2 texCoord;
+in vec3 cameraPos;
 
-// Output color
-out vec4 FragColor;
+uniform vec3 lightPosWorld;
+uniform vec3 lightColor;
+uniform vec3 objectColor;
+uniform mat3 View;
 
-uniform sampler2D tex;
+uniform sampler2D normalMap;
 
 void main() {
+    vec3 normalColor = texture(normalMap, texCoord).rgb;
+    vec3 lightPos = vec3(View * lightPosWorld);
+
+    // ambient
+    float ambientStrength = 0.1;
+    //vec3 ambient = ambientStrength * lightColor * diffuseColor;
+    vec3 ambient = ambientStrength * lightColor;
+  	
+    // diffuse 
+    vec3 norm = normalize(normalColor);
+    vec3 lightDir = normalize(lightPos - cameraPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
     
-    vec3 s_n = normalize((texture(tex, tex_coord.xy)).xyz);
+    // specular
+    float specularStrength = 0.5;
+    vec3 viewDir = normalize(0 - cameraPos);
+    vec3 reflectDir = reflect(-lightDir, norm);  
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = specularStrength * spec * lightColor;  
+        
+    vec3 result = (ambient + diffuse + specular) * objectColor;
 
-    vec3 l_dir = normalize(light_pos_out - fragment_position);
-    vec3 v_dir = normalize(view_dir); // Ensure view direction is normalized
+    //color = vec4(result, 1.0);
+    //color = vec4(normalColor, 1.0);
+    color = vec4(1, 0, 0, 1);
+}
 
-    // Diffuse component
-    float diffuse = max(dot(s_n, l_dir), 0.0);
-    vec3 diffuse_color = k_d * light_clr * diffuse;
+//Vertex
+#version 410 core
 
-    // Blinn-Phong Specular component
-    vec3 half_vector = normalize(v_dir + l_dir); // Halfway vector
-    float spec = pow(max(dot(s_n, half_vector), 0.0), 32); // Shininess of 32
-    vec3 specular_color = k_s * light_clr * spec;
+layout(location = 0) in vec3 planePOS;
+layout(location = 1) in vec2 planeTexCoord;
 
-    // Ambient component
-    vec3 ambient = k_d * vec3(0.2f,0.2f,0.2f);
+uniform mat4 planeMVP;
 
-    // Final color computation
-    vec3 output_color = ambient + diffuse_color + specular_color;
+out vec3 modelPos;
+out vec2 tesTextureCoordOut;
 
-    //FragColor = vec4(output_color, 1);
-
-
-    FragColor =   texture(tex, tex_coord.xy);
+void main() {
+    tesTextureCoordOut = planeTexCoord;
+    modelPos = planePOS;
+    tesTextureCoordOut.y = -tesTextureCoordOut.y;
+    gl_Position = planeMVP * vec4(planePOS, 1.0);
 }
