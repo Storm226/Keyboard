@@ -1,5 +1,5 @@
 ﻿#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtc/matrix_transform.hpp>
