@@ -1,4 +1,4 @@
-#define WINPOS 100,100
+#define WINPOS 1600,800
 #define WINSIZE WIDTH,HEIGHT
 #define WIDTH width
 #define HEIGHT height

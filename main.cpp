@@ -28,8 +28,8 @@ int main(int argc, char** argv)
     // STEP ONE: 
     // define the camera and its matrices, and also 
     // get information needed for projector from camera
-    camera.Front = glm::vec3(0.0f, -1.0f, 0.0f);
-    projector.Front = glm::vec3(0.0f, -1.0f, 0.0f);
+    camera.Front = glm::vec3(0.0f, 0.0f, 0.0f);
+    projector.Front = glm::vec3(0.0f, 0.0f, 0.0f);
   
  
         //render loop
@@ -43,6 +43,8 @@ int main(int argc, char** argv)
             lastFrame = currentFrame;
 
             processInput(window);
+
+            std::cout << "Stop 1 \n";
 
 
 
@@ -83,6 +85,7 @@ int main(int argc, char** argv)
                     frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
                 }
 
+                std::cout << "Stop 2 \n";
 
                 // now that we have world space coordinates for the frustum we can actually check 
                 // for intersections against our upper and lower bounding planes
@@ -101,10 +104,14 @@ int main(int argc, char** argv)
                         intersections.push_back(contact);
                 }
 
+                std::cout << "Stop 3 \n";
+
                 for (int i = 0; i < 8; i++) {
                     if (frustumCorners[i].y < s_upper.point.y && frustumCorners[i].y > s_lower.point.y)
                         intersections.push_back(frustumCorners[i]);
                 }
+
+                std::cout << "Stop 4 \n";
 
                 // hypothetically, we now know if we can see the water or not
                 // if this list is empty, we don't draw
@@ -128,6 +135,7 @@ int main(int argc, char** argv)
                         intersections[i] += s_base.norm * distance_to_base_plane;
                 }
 
+                std::cout << "Stop 5 \n";
                 
                 // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
                 // the x and y span of the visible volume is now the x/y spans of the points in the buffer
@@ -151,32 +159,61 @@ int main(int argc, char** argv)
                         maxY = intersections[i].y;
                 }
 
+                std::cout << "Stop 6 \n";
+
                 // define the range matrix to augment the m_projector matrix
                 glm::mat4 range = glm::mat4(1.0);
                 range[0][0] = maxX - minX;
-                range[0][4] = minX;
+                range[0][3] = minX;
                 range[1][1] = maxY - minY;
-                range[1][4] = minY;
+                range[1][3] = minY;
+
+                std::cout << "Stop 6.2 \n";
 
                 M_Projector = range * M_Projector;
 
 
                 // holy shit we can finally define the fucking vertices that we are gonna pass to shaders 
                 // omg omg omg
+
+                // jk we gotta do more intersection tests then we get the final vertices
                    
                 std::vector<glm::vec3> pre_transform_vertices = 
-                { glm::vec3(0.0f, 0.0f, 0.0f),       // near left    "near" doesn't exist btw
-                  glm::vec3(1.0f, 0.0f, 0.0f),       // near right
-                  glm::vec3(1.0f, 1.0f, 0.0f),       // far left
-                  glm::vec3(1.0f, 1.0f, 0.0f)};      // far right
-            
-                std::vector<glm::vec3> post_transform_vertices;
+                { glm::vec3(0.0f, 0.0f, -1.0f),       // near left   z = -1
+                  glm::vec3(0.0f, 0.0f,  1.0f),       // near left   z = 1
 
-                // 2.4 step 6 do the doubel transform or w/e
-                for (int i = 0; i < 8; i++) {
-                    post_transform_vertices.push_back()
+                  glm::vec3(1.0f, 0.0f, -1.0f),       // near right
+                  glm::vec3(1.0f, 0.0f,  1.0f),       // near right
+
+                  glm::vec3(1.0f, 1.0f, -1.0f),       // far left
+                  glm::vec3(1.0f, 1.0f,  1.0f),       // far left
+
+                  glm::vec3(1.0f, 1.0f, -1.0f),       // far right
+                  glm::vec3(1.0f, 1.0f,  1.0f)};      // far right
+            
+                std::cout << "Stop 6.5 \n";
+
+
+                // MISTAKE
+                // this assume four intersectiosn there may be zero
+                // thats why NaN
+                std::vector<glm::vec3> final_vertices;
+                for (int i = 0; i < 8; i+=2) {
+                    glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 0);
+                    glm::vec3 b = M_Projector * glm::vec4(pre_transform_vertices[i+1], 0);
+                    glm::vec3 intersection;
+                    if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point))
+                        std::cout << "Intersection not found at step 2.4.6 \n";
+
+
+                    final_vertices.push_back(intersection);
                 }
 
+                std::cout << "Stop 7 \n";
+
+                std::cout << "Attempting print intersection vertices: \n";
+                for (int i = 0; i < final_vertices.size(); i++)
+                    printVec(final_vertices[i]);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
