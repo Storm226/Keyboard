@@ -17,6 +17,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+Camera camera(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -120.0, -25.0f);
+Camera projector(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -120.0, -25.0f);
 
 
 int main(int argc, char** argv)
@@ -28,9 +30,11 @@ int main(int argc, char** argv)
     // STEP ONE: 
     // define the camera and its matrices, and also 
     // get information needed for projector from camera
-    camera.Front = glm::vec3(0.0f, 0.0f, 0.0f);
-    projector.Front = glm::vec3(0.0f, 0.0f, 0.0f);
-  
+
+
+    Shader s("Shaders/geo.vs", "Shaders/basic_object_shader.fs");
+    GLuint obj_VAO, obj_VBO;
+    s.use();
  
         //render loop
         // ----------------------------------
@@ -44,7 +48,8 @@ int main(int argc, char** argv)
 
             processInput(window);
 
-            std::cout << "Stop 1 \n";
+            if (DEBUG)
+                std::cout << "Stop 1 \n";
 
 
 
@@ -79,16 +84,19 @@ int main(int argc, char** argv)
                     {  farWidth * 0.5f,  -farHeight * 0.5f, -zFar }   // Far Bottom Right
                 };
 
+                int frustumEdges[12][2] = {
+                    {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near plane edges
+                    {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far plane edges
+                    {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting edges
+                                };
+
                 // now we need to get those corners into world space by using the inverse viewProjection Matrix
                 glm::mat4 inverse_View = glm::inverse(view);
                 for (int i = 0; i < 8; i++) {
                     frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
                 }
-
-                std::cout << "Stop 2 \n";
-
-                // now that we have world space coordinates for the frustum we can actually check 
-                // for intersections against our upper and lower bounding planes
+                if (DEBUG)
+                   std::cout << "Stop 2 \n";
 
 
                 // Check for intersections between the edges of the camera frustum and the bound planes (Supper and
@@ -96,29 +104,37 @@ int main(int argc, char** argv)
 
                 std::vector<glm::vec3> intersections;
 
-                for (int i = 1; i < 8; i++) {
+                for (int i = 0; i < 12; i++) {
                     glm::vec3 contact;
-                    if (lineSegmentPlaneIntersection(contact, frustumCorners[i - 1], frustumCorners[i], s_upper.norm, s_upper.point))
+                    int a = frustumEdges[i][0];
+                    int b = frustumEdges[i][1];
+
+                    if (lineSegmentPlaneIntersection(contact, frustumCorners[a], frustumCorners[b], s_upper.norm, s_upper.point))
                         intersections.push_back(contact);
-                    if (lineSegmentPlaneIntersection(contact, frustumCorners[i - 1], frustumCorners[i], s_lower.norm, s_lower.point))
+                    if (lineSegmentPlaneIntersection(contact, frustumCorners[a], frustumCorners[b], s_lower.norm, s_lower.point))
                         intersections.push_back(contact);
                 }
 
-                std::cout << "Stop 3 \n";
+                if (DEBUG)
+                      std::cout << "Stop 3 \n";
 
                 for (int i = 0; i < 8; i++) {
                     if (frustumCorners[i].y < s_upper.point.y && frustumCorners[i].y > s_lower.point.y)
                         intersections.push_back(frustumCorners[i]);
                 }
 
-                std::cout << "Stop 4 \n";
+                if(DEBUG)
+                       std::cout << "Stop 4 \n";
 
                 // hypothetically, we now know if we can see the water or not
                 // if this list is empty, we don't draw
                 // if the list is not empty, draw the water
                 if (intersections.size() > 0)
                     worldSpaceIntersection = true;
-                 
+                else
+                {
+                    std::cout << "Surface not visible aborting draw \n";
+                }
 
                 // Project all points in buffer onto plane
                 // check this math i think it might be slightly off but i cant be fucked rn
@@ -134,8 +150,8 @@ int main(int argc, char** argv)
                     else
                         intersections[i] += s_base.norm * distance_to_base_plane;
                 }
-
-                std::cout << "Stop 5 \n";
+                if (DEBUG)
+                   std::cout << "Stop 5 \n";
                 
                 // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
                 // the x and y span of the visible volume is now the x/y spans of the points in the buffer
@@ -144,8 +160,10 @@ int main(int argc, char** argv)
 
                 // we can do this transformation and also compute the minX/maxX minY/maxY
                 for (int i = 0; i < intersections.size(); i++) {
-                    intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
-
+                   
+                    // ALEX i think second one makes sense
+                    // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
+                    intersections[i] = glm::vec4(intersections[i], 0) * projector_view * perspective;
                     // x span
                     if (intersections[i].x < minX)
                         minX = intersections[i].x;
@@ -158,9 +176,10 @@ int main(int argc, char** argv)
                     else if (intersections[i].y > maxY)
                         maxY = intersections[i].y;
                 }
-
-                std::cout << "Stop 6 \n";
-
+               
+                if (DEBUG)
+                      std::cout << "Stop 6 \n";
+    
                 // define the range matrix to augment the m_projector matrix
                 glm::mat4 range = glm::mat4(1.0);
                 range[0][0] = maxX - minX;
@@ -168,7 +187,9 @@ int main(int argc, char** argv)
                 range[1][1] = maxY - minY;
                 range[1][3] = minY;
 
-                std::cout << "Stop 6.2 \n";
+
+                if (DEBUG)
+                     std::cout << "Stop 6.2 \n";
 
                 M_Projector = range * M_Projector;
 
@@ -191,16 +212,15 @@ int main(int argc, char** argv)
                   glm::vec3(1.0f, 1.0f, -1.0f),       // far right
                   glm::vec3(1.0f, 1.0f,  1.0f)};      // far right
             
-                std::cout << "Stop 6.5 \n";
+
+                if (DEBUG)
+                    std::cout << "Stop 6.5 \n";
 
 
-                // MISTAKE
-                // this assume four intersectiosn there may be zero
-                // thats why NaN
                 std::vector<glm::vec3> final_vertices;
                 for (int i = 0; i < 8; i+=2) {
-                    glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 0);
-                    glm::vec3 b = M_Projector * glm::vec4(pre_transform_vertices[i+1], 0);
+                    glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 1.0f);
+                    glm::vec3 b = M_Projector * glm::vec4(pre_transform_vertices[i+1], 1.0f);
                     glm::vec3 intersection;
                     if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point))
                         std::cout << "Intersection not found at step 2.4.6 \n";
@@ -209,11 +229,23 @@ int main(int argc, char** argv)
                     final_vertices.push_back(intersection);
                 }
 
-                std::cout << "Stop 7 \n";
+
+                if (DEBUG)
+                    std::cout << "Stop 7 \n";
+
 
                 std::cout << "Attempting print intersection vertices: \n";
                 for (int i = 0; i < final_vertices.size(); i++)
                     printVec(final_vertices[i]);
+
+
+
+                s.use();
+                
+                if(worldSpaceIntersection)
+                     populate_buffer(obj_VAO, obj_VBO, final_vertices, false, false);
+
+                draw(obj_VAO, final_vertices);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
