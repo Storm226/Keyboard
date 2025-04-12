@@ -3,7 +3,7 @@
 #define WIDTH width
 #define HEIGHT height
 #define DISPLAYMODE GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH
-#define DEBUG 0
+#define DEBUG 1
 
 #define COLOR_BLACK       glm::vec3(0.0f, 0.0f, 0.0f)
 #define COLOR_WHITE       glm::vec3(1.0f, 1.0f, 1.0f)

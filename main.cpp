@@ -110,15 +110,14 @@ int main(int argc, char** argv)
                     glm::vec3 intersection;
                     if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point))
                         std::cout << "Intersection not found at step 2.4.6 \n";
-
-
-                    final_vertices.push_back(intersection);
+                    else
+                        final_vertices.push_back(intersection);
                 }
 
                 // printing those vertices for debugging purposes. 
-                std::cout << "Attempting print intersection vertices: \n";
+               /* std::cout << "Attempting print intersection vertices: \n";
                 for (int i = 0; i < final_vertices.size(); i++)
-                    printVec(final_vertices[i]);
+                    printVec(final_vertices[i]);*/
 
                 s.use();
                 if (worldSpaceIntersection)
