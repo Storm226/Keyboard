@@ -26,7 +26,9 @@
 #define COLOR_TEAL        glm::vec3(0.0f, 0.5f, 0.5f)
 #define COLOR_INDIGO      glm::vec3(0.29f, 0.0f, 0.51f)
 
-
+glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 projector_view, glm::mat4 perspective);
+void project_onto_base_plane(std::vector<glm::vec3> intersections);
+bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 view);
 void printVec(glm::vec3 v);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
