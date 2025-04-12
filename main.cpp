@@ -73,8 +73,14 @@ int main(int argc, char** argv)
                 // then we define a grid from the x and y span and also build a matrix 
                 // which will transform the [0, 1] grid  onto the span of water 
                 glm::mat4 range = generate_range_matrix(intersections, projector_view, perspective);
+
+                
                 M_Projector = range * M_Projector;
 
+
+                // this is the grid as defined in the paper from (0, 1)
+                // later on we will have a way to define the u,v coordinates
+                // s.t. we will be able to sample our noise/ T.Waves / Height function
                 std::vector<glm::vec3> pre_transform_vertices =
                 { glm::vec3(0.0f, 0.0f, -1.0f),       // near left   z = -1
                   glm::vec3(0.0f, 0.0f,  1.0f),       // near left   z = 1
@@ -93,6 +99,10 @@ int main(int argc, char** argv)
                     std::cout << "Stop 6.5 \n";
 
 
+                // we transform each vertex in the grid twice, once at z = -1 and again at z = + 1
+                // thats the reason why the four corners are each defined twice
+                // then we find the intersection of those points against the base plane (the base plane of the water volume)
+                // the intersetions of those line segments against the plane are the vertices we want to render. 
                 std::vector<glm::vec3> final_vertices;
                 for (int i = 0; i < 8; i += 2) {
                     glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 1.0f);
@@ -105,8 +115,7 @@ int main(int argc, char** argv)
                     final_vertices.push_back(intersection);
                 }
 
-
-
+                // printing those vertices for debugging purposes. 
                 std::cout << "Attempting print intersection vertices: \n";
                 for (int i = 0; i < final_vertices.size(); i++)
                     printVec(final_vertices[i]);
@@ -130,30 +139,33 @@ int main(int argc, char** argv)
 
 
 
+// the role of this function is to generate a matrix which defines a transformation from (0, 1) onto the span of the 
+// visible volume in screen space
 glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 projector_view, glm::mat4 perspective) {
 
     // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
     // the x and y span of the visible volume is now the x/y spans of the points in the buffer
 
-    float minX = 0, maxX = 0, minY = 0, maxY = 0;
+    float Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0;
 
     // we can do this transformation and also compute the minX/maxX minY/maxY
     for (int i = 0; i < intersections.size(); i++) {
 
-        // ALEX i think second one makes sense
-        // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
-        intersections[i] = glm::vec4(intersections[i], 0) * projector_view * perspective;
+        // in spirit we want the inverse, which should be the second line not the first as i had
+        // initially
+            // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
+            intersections[i] = glm::vec4(intersections[i], 0) * projector_view * perspective;
         // x span
-        if (intersections[i].x < minX)
-            minX = intersections[i].x;
-        else if (intersections[i].x > maxX)
-            maxX = intersections[i].x;
+        if (intersections[i].x < Xmin)
+            Xmin = intersections[i].x;
+        else if (intersections[i].x > Xmax)
+            Xmax = intersections[i].x;
 
         // y span
-        if (intersections[i].y < minY)
-            minY = intersections[i].y;
-        else if (intersections[i].y > maxY)
-            maxY = intersections[i].y;
+        if (intersections[i].y < Ymin)
+            Ymin = intersections[i].y;
+        else if (intersections[i].y > Ymax)
+            Ymax = intersections[i].y;
     }
 
     if (DEBUG)
@@ -161,10 +173,10 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
 
     // define the range matrix to augment the m_projector matrix
     glm::mat4 range = glm::mat4(1.0);
-    range[0][0] = maxX - minX;
-    range[0][3] = minX;
-    range[1][1] = maxY - minY;
-    range[1][3] = minY;
+    range[0][0] = Xmax - Xmin;
+    range[0][3] = Xmin;
+    range[1][1] = Ymax - Ymin;
+    range[1][3] = Ymin;
 
     return range;
 }
