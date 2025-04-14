@@ -17,8 +17,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-Camera camera(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -120.0, -25.0f);
-Camera projector(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -120.0, -25.0f);
+// position, up, pitch, yaw
+
+
+Camera camera(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -90.0f); 
+Camera projector(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0, -90.0f);
+
+
+
+
 
 
 int main(int argc, char** argv)
@@ -28,17 +35,20 @@ int main(int argc, char** argv)
 
     Shader s("Shaders/geo.vs", "Shaders/basic_object_shader.fs");
     GLuint obj_VAO, obj_VBO;
-    s.use();
 
     // STEP ONE: 
     // define the camera and its matrices, and also 
     // get information needed for projector from camera
     glm::mat4 view;
     glm::mat4 perspective;
+    glm::mat4 camera_viewprojection;
     // we also are interested in defining our projector, which is kinda basically a camera
     glm::mat4 projector_view;
     glm::mat4 M_Projector;
     std::vector<glm::vec3> intersections;
+
+    s.use();
+
 
 
         //render loop
@@ -58,13 +68,15 @@ int main(int argc, char** argv)
 
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+            camera_viewprojection =  view * perspective;
+
             projector_view = projector.GetViewMatrix();
             M_Projector = glm::inverse(projector_view * perspective);
 
             // check to see if camera frustum intersects with the bounding water volume 
             // in world space, if so initalize those intersection points into intersections list
             bool worldSpaceIntersection;
-            if (worldSpaceIntersection = checkWorldSpaceIntersection(intersections, view)) {
+            if (worldSpaceIntersection = checkWorldSpaceIntersection(intersections, camera_viewprojection)) {
                 std::cout << "World space intersections detected \n";
 
                 // the paper says we must project onto base plane all intersecting points
@@ -153,7 +165,7 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
         // in spirit we want the inverse, which should be the second line not the first as i had
         // initially
             // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
-            intersections[i] = glm::vec4(intersections[i], 0) * projector_view * perspective;
+            intersections[i] = glm::vec4(intersections[i], 1) * projector_view * perspective;
         // x span
         if (intersections[i].x < Xmin)
             Xmin = intersections[i].x;
@@ -182,15 +194,14 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
 
 // the paper says we need to project world space positions onto the s_base plane
 // i dont remember why right now
-void project_onto_base_plane(std::vector<glm::vec3> intersections) {
+void project_onto_base_plane(std::vector<glm::vec3>& intersections) {
     // Project all points in buffer onto plane
-               // check this math i think it might be slightly off but i cant be fucked rn
     for (int i = 0; i < intersections.size(); i++) {
 
         // if the point is above the plane, we wanna decrease its vertical position
         // if the point is below, we wanna increment its position
         bool above = intersections[i].y > s_base.point.y;
-        float distance_to_base_plane = intersections[i].y - s_base.point.y;
+        float distance_to_base_plane = glm::abs(intersections[i].y - s_base.point.y);
 
         if (above)
             intersections[i] -= s_base.norm * distance_to_base_plane;
@@ -205,7 +216,7 @@ void project_onto_base_plane(std::vector<glm::vec3> intersections) {
 // each edge of the camera frustum in world space against the upper and lower bounding 
 // planes of what will become our water volume. If intersections are detected, then we
 // can see and so should draw our water volume at those positions, eventually. 
-bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 view) {
+bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 viewprojection) {
 
     // STEP TWO:
     // determine if any of the displaceable volume is within the camera frustum
@@ -236,9 +247,9 @@ bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat
     };
 
     // now we need to get those corners into world space by using the inverse viewProjection Matrix
-    glm::mat4 inverse_View = glm::inverse(view);
+    glm::mat4 inverse_ViewProjection = glm::inverse(viewprojection);
     for (int i = 0; i < 8; i++) {
-        frustumCorners[i] = glm::vec3(inverse_View * glm::vec4(frustumCorners[i], 1.0f));
+        frustumCorners[i] = glm::vec3(inverse_ViewProjection * glm::vec4(frustumCorners[i], 1.0f));
     }
     if (DEBUG)
         std::cout << "Stop 2 \n";
