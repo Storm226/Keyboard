@@ -18,7 +18,50 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+// Globals
+GLuint skyboxVAO, skyboxVBO, objectVAO, objectVBO;
+GLuint cubemapTexture, skyboxShader, objectShader;
+glm::mat4 viewMatrix, projMatrix;
+float rotationX = 0.0f, rotationY = 0.0f, reflectStrength = 0.8f;
+double lastX = 0.0, lastY = 0.0;
+bool mousePressed = false;
 
+// Cube map faces
+std::vector<std::string> faces = {
+    "cubemap/cubemap_posx.png",
+    "cubemap/cubemap_negx.png",
+    "cubemap/cubemap_posy.png",
+    "cubemap/cubemap_negy.png",
+    "cubemap/cubemap_posz.png",
+    "cubemap/cubemap_negz.png"
+};
+
+GLuint loadCubemapWithRawData(std::vector<std::string> faces) {
+    cy::GLTextureCubeMap cubemap;
+    cubemap.Initialize();
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetID());
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    for (GLuint i = 0; i < faces.size(); ++i) {
+        std::vector<unsigned char> image;
+        unsigned width, height;
+        unsigned error = lodepng::decode(image, width, height, faces[i]);
+        if (error) {
+            std::cerr << "Failed to load cubemap texture: " << faces[i] << " - " << lodepng_error_text(error) << std::endl;
+            exit(1);
+        }
+        cubemap.SetImage((cy::GLTextureCubeMap::Side)i, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, image.data(), width, height);
+    }
+
+    cubemap.BuildMipmaps();
+    cubemap.SetSeamless(true);
+    return cubemap.GetID();
+}
 
 int main(int argc, char** argv)
 {
@@ -31,8 +74,11 @@ int main(int argc, char** argv)
     // get information needed for projector from camera
     camera.Front = glm::vec3(0.0f, 0.0f, 0.0f);
     projector.Front = glm::vec3(0.0f, 0.0f, 0.0f);
-  
- 
+
+    
+    cubemapTexture = loadCubemapWithRawData(faces);
+         
+
         //render loop
         // ----------------------------------
         while (!glfwWindowShouldClose(window))
@@ -215,6 +261,10 @@ int main(int argc, char** argv)
                 std::cout << "Attempting print intersection vertices: \n";
                 for (int i = 0; i < final_vertices.size(); i++)
                     printVec(final_vertices[i]);
+
+
+                //Binding the cubemap
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();

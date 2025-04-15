@@ -13,6 +13,7 @@ uniform mat3 View;
 
 uniform sampler2D normalMap;
 uniform sampler2D reflectionMap;
+uniform samplerCube skybox;
 
 void main() {
     vec3 normalColor = texture(normalMap, texCoord).rgb;
@@ -36,20 +37,24 @@ void main() {
     vec3 halfDir = normalize(lightDir + viewDir);
     //vec3 reflectDir = reflect(-lightDir, norm);  
     //float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    float spec = pow(max(dot(norm, halfDir), 0.0), 32.0) //shiniess is 3
+    float spec = pow(max(dot(norm, halfDir), 0.0), 32.0); //shiniess is 3
     vec3 specular = specularStrength * spec * lightColor;  
         
     vec3 result = (ambient + diffuse + specular) * objectColor;
 
     // fresnel
-    float fresnel = pow(1.0 - clamp(dot(viewDir, normal), 0.0, 1.0), 5.0);
+    float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), 5.0);
+
+    //cube map reflection
+    vec3 reflecteddir = reflect(-viewdir, norm);
+    vec3 reflectioncolor = texture(skybox, reflecteddir).rgb;
 
     //disort reflection w normal
-    vec2 distortion = norm.xz * 0.02;
-    vec2 distortionUV = texCoord + distortion;
-    vec3 reflectionColor = texture(reflectionMap, distortionUV).rgb;
+    //vec2 distortion = norm.xz * 0.02;
+    //vec2 distortionUV = texCoord + distortion;
+    //vec3 reflectionColor = texture(reflectionMap, distortionUV).rgb;
 
-    vec3 finalcolor = mix(litColor, reflectionColor, fresnel);
+    vec3 finalcolor = mix(result, reflectioncolor, fresnel);
 
     //color = vec4(finalcolor, 1.0);
     color = vec4(1, 0, 0, 1);
