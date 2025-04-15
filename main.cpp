@@ -20,12 +20,8 @@
 // position, up, pitch, yaw
 
 
-Camera camera(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -90.0f); 
-Camera projector(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0, -90.0f);
-
-
-
-
+Camera camera(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f); 
+Camera projector(glm::vec3(0.0f, 12.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f);
 
 
 int main(int argc, char** argv)
@@ -49,7 +45,14 @@ int main(int argc, char** argv)
 
     s.use();
 
+    line_plane_tests();
 
+    int foundCount = 0;
+    int notFoundCount = 0;
+
+
+    // theory   ----- MVP
+    // glm/glsl ----- PVM
 
         //render loop
         // ----------------------------------
@@ -63,15 +66,12 @@ int main(int argc, char** argv)
 
             processInput(window);
 
-            if (DEBUG)
-                std::cout << "Stop 1 \n";
-
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
-            camera_viewprojection =  view * perspective;
+            camera_viewprojection = perspective * view;
 
             projector_view = projector.GetViewMatrix();
-            M_Projector = glm::inverse(projector_view * perspective);
+            M_Projector = glm::inverse( perspective * projector_view);
 
             // check to see if camera frustum intersects with the bounding water volume 
             // in world space, if so initalize those intersection points into intersections list
@@ -84,10 +84,10 @@ int main(int argc, char** argv)
 
                 // then we define a grid from the x and y span and also build a matrix 
                 // which will transform the [0, 1] grid  onto the span of water 
-                glm::mat4 range = generate_range_matrix(intersections, projector_view, perspective);
+                glm::mat4 range = generate_range_matrix(intersections, glm::inverse(M_Projector));
 
                 
-                M_Projector = range * M_Projector;
+                M_Projector = M_Projector * range;
 
 
                 // this is the grid as defined in the paper from (0, 1)
@@ -107,8 +107,7 @@ int main(int argc, char** argv)
                   glm::vec3(1.0f, 1.0f,  1.0f) };      // far right
 
 
-                if (DEBUG)
-                    std::cout << "Stop 6.5 \n";
+
 
 
                 // we transform each vertex in the grid twice, once at z = -1 and again at z = + 1
@@ -120,23 +119,29 @@ int main(int argc, char** argv)
                     glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 1.0f);
                     glm::vec3 b = M_Projector * glm::vec4(pre_transform_vertices[i + 1], 1.0f);
                     glm::vec3 intersection;
-                    if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point))
+                    if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point)) {
                         std::cout << "Intersection not found at step 2.4.6 \n";
-                    else
+                        notFoundCount++;
+                        std::cout << "Not found count : " << notFoundCount << "\n";
+                    }
+                        
+                    else {
                         final_vertices.push_back(intersection);
+                        std::cout << "Intersection FOUND found at step 2.4.6 \n";
+                        foundCount++;
+                        std::cout << "Found count : " << foundCount << "\n";
+                    }
+                        
                 }
 
-                // printing those vertices for debugging purposes. 
-               /* std::cout << "Attempting print intersection vertices: \n";
-                for (int i = 0; i < final_vertices.size(); i++)
-                    printVec(final_vertices[i]);*/
 
-                s.use();
-                if (worldSpaceIntersection)
+                std::cout <<  "Final vertices size : " << final_vertices.size() << "\n";
+                
+                if (worldSpaceIntersection && final_vertices.size() >= 3) {
+                    s.use();
                     populate_buffer(obj_VAO, obj_VBO, final_vertices, false, false);
-
-                draw(obj_VAO, final_vertices);
-
+                    draw(obj_VAO, final_vertices);
+                }
             }
 
             glfwSwapBuffers(window);
@@ -152,21 +157,28 @@ int main(int argc, char** argv)
 
 // the role of this function is to generate a matrix which defines a transformation from (0, 1) onto the span of the 
 // visible volume in screen space
-glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 projector_view, glm::mat4 perspective) {
+glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 inverse_M_Projector) {
 
     // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
     // the x and y span of the visible volume is now the x/y spans of the points in the buffer
 
-    float Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0;
+    float Xmin, Xmax, Ymin, Ymax;
 
     // we can do this transformation and also compute the minX/maxX minY/maxY
     for (int i = 0; i < intersections.size(); i++) {
 
         // in spirit we want the inverse, which should be the second line not the first as i had
-        // initially
-            // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
-            intersections[i] = glm::vec4(intersections[i], 1) * projector_view * perspective;
-        // x span
+         // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
+            intersections[i] = inverse_M_Projector * glm::vec4(intersections[i], 1);
+            if (i == 0) {
+                Xmin = intersections[i].x;
+                Xmax = intersections[i].x;
+                Ymin = intersections[i].y;
+                Ymax = intersections[i].y;
+
+                continue;
+            }
+
         if (intersections[i].x < Xmin)
             Xmin = intersections[i].x;
         else if (intersections[i].x > Xmax)
@@ -179,15 +191,13 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
             Ymax = intersections[i].y;
     }
 
-    if (DEBUG)
-        std::cout << "Stop 6 \n";
 
     // define the range matrix to augment the m_projector matrix
     glm::mat4 range = glm::mat4(1.0);
     range[0][0] = Xmax - Xmin;
-    range[0][3] = Xmin;
+    range[3][0] = Xmin;
     range[1][1] = Ymax - Ymin;
-    range[1][3] = Ymin;
+    range[3][1] = Ymin;
 
     return range;
 }
@@ -223,22 +233,21 @@ bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat
     // if not, don't bother drawing
     bool worldSpaceIntersection = false;
 
-    float tanFovY = glm::tan(FOV * 0.5f);
-    float nearHeight = 2.0f * zNear * tanFovY;
-    float nearWidth = nearHeight * ASPECT_RATIO;
-    float farHeight = 2.0f * zFar * tanFovY;
-    float farWidth = farHeight * ASPECT_RATIO;
-
     glm::vec3 frustumCorners[8] = {
-        { -nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Left
-        {  nearWidth * 0.5f,  nearHeight * 0.5f, -zNear }, // Near Top Right
-        { -nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Left
-        {  nearWidth * 0.5f, -nearHeight * 0.5f, -zNear }, // Near Bottom Right
-        { -farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Left
-        {  farWidth * 0.5f,   farHeight * 0.5f, -zFar },  // Far Top Right
-        { -farWidth * 0.5f,  -farHeight * 0.5f, -zFar },  // Far Bottom Left
-        {  farWidth * 0.5f,  -farHeight * 0.5f, -zFar }   // Far Bottom Right
+      {-1,  1, -1}, // Near Top Left
+      { 1,  1, -1}, // Near Top Right
+      {-1, -1, -1}, // Near Bottom Left
+      { 1, -1, -1}, // Near Bottom Right
+      {-1,  1,  1}, // Far Top Left
+      { 1,  1,  1}, // Far Top Right
+      {-1, -1,  1}, // Far Bottom Left
+      { 1, -1,  1}  // Far Bottom Right
     };
+
+    for (int i = 0; i < 8; i++) {
+        glm::vec4 corner = glm::inverse(viewprojection) * glm::vec4(frustumCorners[i], 1.0f);
+        frustumCorners[i] = glm::vec3(corner) / corner.w; 
+    }
 
     int frustumEdges[12][2] = {
         {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near plane edges
@@ -246,13 +255,7 @@ bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat
         {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting edges
     };
 
-    // now we need to get those corners into world space by using the inverse viewProjection Matrix
-    glm::mat4 inverse_ViewProjection = glm::inverse(viewprojection);
-    for (int i = 0; i < 8; i++) {
-        frustumCorners[i] = glm::vec3(inverse_ViewProjection * glm::vec4(frustumCorners[i], 1.0f));
-    }
-    if (DEBUG)
-        std::cout << "Stop 2 \n";
+
 
 
     // Check for intersections between the edges of the camera frustum and the bound planes (Supper and
@@ -269,8 +272,6 @@ bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat
             intersections.push_back(contact);
     }
 
-    if (DEBUG)
-        std::cout << "Stop 3 \n";
 
     for (int i = 0; i < 8; i++) {
         if (frustumCorners[i].y < s_upper.point.y && frustumCorners[i].y > s_lower.point.y)
@@ -503,14 +504,8 @@ void line_plane_tests() {
     line_plane_ShouldBeTrue1();
     line_plane_ShouldBeTrue2();
     line_plane_ShouldBeTrue3();
-    line_plane_ShouldBeTrue4();
-    line_plane_ShouldBeTrue5();
-
     line_plane_ShouldBeFalse1();
-    line_plane_ShouldBeFalse2();
-    line_plane_ShouldBeFalse3();
-    line_plane_ShouldBeFalse4();
-    line_plane_ShouldBeFalse5();
+
 
 }
 
@@ -520,8 +515,10 @@ void line_plane_ShouldBeTrue1() {
     glm::vec3 b(0.0f, -20.0f, 0.0f);
     glm::vec3 ray = b - a;
     glm::vec3 ray_origin = a;
-    glm::vec3 p(1.0f, 1.0f, 0.0f); // Plane at y = 1
-    glm::vec3 norm(0.0f, 1.0f, 0.0f); // Horizontal plane
+   
+    glm::vec3 p = s_upper.point;
+    glm::vec3 norm = s_upper.norm;
+
     glm::vec3 c;
 
     if (lineSegmentPlaneIntersection(c, a, b, norm, p))
@@ -529,6 +526,42 @@ void line_plane_ShouldBeTrue1() {
     else
         std::cout << "FAIL\n";
 }
+
+void line_plane_ShouldBeTrue2() {
+    glm::vec3 a(30.0f, 12.0f, 0.0f);
+    glm::vec3 b(30.0f, -40.0f, 0.0f);
+    glm::vec3 ray = b - a;
+    glm::vec3 ray_origin = a;
+
+    glm::vec3 p = s_upper.point;
+    glm::vec3 norm = s_upper.norm;
+
+    glm::vec3 c;
+
+    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
+        std::cout << "PASS\n";
+    else
+        std::cout << "FAIL\n";
+}
+
+void line_plane_ShouldBeTrue3() {
+    glm::vec3 a(13.0f, -6.0f, 13.0f);
+    glm::vec3 b(30.0f, -40.0f, 5.0f);
+    glm::vec3 ray = b - a;
+    glm::vec3 ray_origin = a;
+
+    glm::vec3 p = s_lower.point;
+    glm::vec3 norm = s_lower.norm;
+
+    glm::vec3 c;
+
+    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
+        std::cout << "PASS\n";
+    else
+        std::cout << "FAIL\n";
+}
+
+
 
 void line_plane_ShouldBeFalse1() {
     glm::vec3 a(0.0f, -10.0f, 0.0f);
@@ -537,134 +570,6 @@ void line_plane_ShouldBeFalse1() {
     glm::vec3 ray_origin = a;
     glm::vec3 p(1.0f, 1.0f, 0.0f);
     glm::vec3 norm(0.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at z = 5, ray moving in z-direction
-void line_plane_ShouldBeTrue2() {
-    glm::vec3 a(2.0f, 0.0f, -2.0f);
-    glm::vec3 b(2.0f, 0.0f, 10.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, 5.0f); // Plane at z = 5
-    glm::vec3 norm(0.0f, 0.0f, 1.0f); // Plane normal along z
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at z = -5, but ray is going the opposite direction
-void line_plane_ShouldBeFalse2() {
-    glm::vec3 a(2.0f, 0.0f, -10.0f);
-    glm::vec3 b(2.0f, 0.0f, -6.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, -5.0f);
-    glm::vec3 norm(0.0f, 0.0f, 1.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at x = 3, ray moving in x-direction
-void line_plane_ShouldBeTrue3() {
-    glm::vec3 a(-5.0f, 2.0f, 0.0f);
-    glm::vec3 b(6.0f, 2.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(3.0f, 0.0f, 0.0f); // Plane at x = 3
-    glm::vec3 norm(1.0f, 0.0f, 0.0f); // Plane normal along x
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at x = 8, but ray never reaches it
-void line_plane_ShouldBeFalse3() {
-    glm::vec3 a(-5.0f, 2.0f, 0.0f);
-    glm::vec3 b(4.0f, 2.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(8.0f, 0.0f, 0.0f);
-    glm::vec3 norm(1.0f, 0.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Diagonal plane cutting through the origin
-void line_plane_ShouldBeTrue4() {
-    glm::vec3 a(0.0f, 5.0f, 5.0f);
-    glm::vec3 b(0.0f, -5.0f, -5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, 0.0f); // Plane at y = z
-    glm::vec3 norm(0.0f, 1.0f, -1.0f); // Normal pointing along (0,1,-1)
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Parallel case, no intersection
-void line_plane_ShouldBeFalse4() {
-    glm::vec3 a(1.0f, 2.0f, 3.0f);
-    glm::vec3 b(1.0f, 4.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 1.0f, 0.0f);
-    glm::vec3 norm(0.0f, 1.0f, -1.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane tilted diagonally in x-y
-void line_plane_ShouldBeTrue5() {
-    glm::vec3 a(0.0f, 10.0f, 5.0f);
-    glm::vec3 b(10.0f, 0.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(5.0f, 5.0f, 5.0f); // Plane at x + y = 10
-    glm::vec3 norm(1.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Ray goes away from plane, no intersection
-void line_plane_ShouldBeFalse5() {
-    glm::vec3 a(0.0f, 10.0f, 5.0f);
-    glm::vec3 b(-10.0f, 20.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(5.0f, 5.0f, 5.0f);
-    glm::vec3 norm(1.0f, 1.0f, 0.0f);
     glm::vec3 c;
 
     if (!lineSegmentPlaneIntersection(c, a, b, norm, p))

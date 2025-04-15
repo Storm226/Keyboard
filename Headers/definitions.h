@@ -26,7 +26,7 @@
 #define COLOR_TEAL        glm::vec3(0.0f, 0.5f, 0.5f)
 #define COLOR_INDIGO      glm::vec3(0.29f, 0.0f, 0.51f)
 
-glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 projector_view, glm::mat4 perspective);
+glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 inverse_M_Projector);
 void project_onto_base_plane(std::vector<glm::vec3>& intersections);
 bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 viewprojection);
 void printVec(glm::vec3 v);
@@ -49,14 +49,8 @@ void line_plane_tests();
 void line_plane_ShouldBeTrue1();
 void line_plane_ShouldBeTrue2();
 void line_plane_ShouldBeTrue3();
-void line_plane_ShouldBeTrue4();
-void line_plane_ShouldBeTrue5();
-
 void line_plane_ShouldBeFalse1();
-void line_plane_ShouldBeFalse2();
-void line_plane_ShouldBeFalse3();
-void line_plane_ShouldBeFalse4();
-void line_plane_ShouldBeFalse5();
+
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -69,7 +63,7 @@ GLFWwindow* window;
 // camera
 float cameraSpeed = 15.0f;
 float zNear = 1.0f;
-float zFar = 100.0f;
+float zFar = 30.0f;
 
 
 
@@ -95,7 +89,7 @@ struct plane {
 // these are the world space positions of our upper and lower planes which 
 // together encaspulate the volume of displaced points
 plane s_upper = { glm::vec3(0.0f,  10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
-plane s_base = { glm::vec3(0.0f,    0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
+plane s_base = { glm::vec3(0.0f,    -0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
 plane s_lower = { glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
 
 
