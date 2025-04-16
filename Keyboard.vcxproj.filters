@@ -103,6 +103,10 @@
     <None Include="Shaders\geo.gs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="waterRendering.fs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="waterRendering.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg">

@@ -23,7 +23,7 @@ GLuint skyboxVAO, skyboxVBO, objectVAO, objectVBO;
 GLuint cubemapTexture, skyboxShader, objectShader;
 glm::mat4 viewMatrix, projMatrix;
 float rotationX = 0.0f, rotationY = 0.0f, reflectStrength = 0.8f;
-double lastX = 0.0, lastY = 0.0;
+//double lastX = 0.0, lastY = 0.0;
 bool mousePressed = false;
 
 // Cube map faces
@@ -36,31 +36,61 @@ std::vector<std::string> faces = {
     "cubemap/cubemap_negz.png"
 };
 
-GLuint loadCubemapWithRawData(std::vector<std::string> faces) {
-    cy::GLTextureCubeMap cubemap;
-    cubemap.Initialize();
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.GetID());
+void compileShaders() {
+    Shader shader("waterRendering.vs", "waterRendering.fs");
+
+    //Shader shader("6.2.cubemaps.vs", "6.2.cubemaps.fs");
+}
+
+unsigned char* loadPNG(const std::string& filename, int& width, int& height, int& channels) {
+    std::vector<unsigned char> image;
+    unsigned int w, h;
+
+    // Decode PNG file
+    unsigned int error = lodepng::decode(image, w, h, filename);
+    if (error) {
+        std::cerr << "PNG Load Error: " << lodepng_error_text(error) << " for file " << filename << std::endl;
+        return nullptr;
+    }
+
+    width = w;
+    height = h;
+    channels = 4; // LodePNG always returns RGBA
+
+    // Convert std::vector to raw pointer
+    unsigned char* data = new unsigned char[image.size()];
+    std::copy(image.begin(), image.end(), data);
+
+    return data;
+}
+
+unsigned int loadCubemap(std::vector<std::string> faces) {
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, channels;
+    for (GLuint i = 0; i < faces.size(); i++) {
+        unsigned char* data = loadPNG(faces[i], width, height, channels);
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+            delete[] data; // Free allocated memory
+        }
+        else {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+        }
+    }
+
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    for (GLuint i = 0; i < faces.size(); ++i) {
-        std::vector<unsigned char> image;
-        unsigned width, height;
-        unsigned error = lodepng::decode(image, width, height, faces[i]);
-        if (error) {
-            std::cerr << "Failed to load cubemap texture: " << faces[i] << " - " << lodepng_error_text(error) << std::endl;
-            exit(1);
-        }
-        cubemap.SetImage((cy::GLTextureCubeMap::Side)i, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, image.data(), width, height);
-    }
-
-    cubemap.BuildMipmaps();
-    cubemap.SetSeamless(true);
-    return cubemap.GetID();
+    return textureID;
 }
 
 int main(int argc, char** argv)
@@ -76,7 +106,7 @@ int main(int argc, char** argv)
     projector.Front = glm::vec3(0.0f, 0.0f, 0.0f);
 
     
-    cubemapTexture = loadCubemapWithRawData(faces);
+    cubemapTexture = loadCubemap(faces);
          
 
         //render loop
@@ -488,181 +518,4 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-}
-
-
-// some of these tests seem to fail
-// further investigation is needed
-void line_plane_tests() {
-    line_plane_ShouldBeTrue1();
-    line_plane_ShouldBeTrue2();
-    line_plane_ShouldBeTrue3();
-    line_plane_ShouldBeTrue4();
-    line_plane_ShouldBeTrue5();
-
-    line_plane_ShouldBeFalse1();
-    line_plane_ShouldBeFalse2();
-    line_plane_ShouldBeFalse3();
-    line_plane_ShouldBeFalse4();
-    line_plane_ShouldBeFalse5();
-
-}
-
-
-void line_plane_ShouldBeTrue1() {
-    glm::vec3 a(0.0f, 10.0f, 0.0f);
-    glm::vec3 b(0.0f, -20.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(1.0f, 1.0f, 0.0f); // Plane at y = 1
-    glm::vec3 norm(0.0f, 1.0f, 0.0f); // Horizontal plane
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-void line_plane_ShouldBeFalse1() {
-    glm::vec3 a(0.0f, -10.0f, 0.0f);
-    glm::vec3 b(0.0f, -20.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(1.0f, 1.0f, 0.0f);
-    glm::vec3 norm(0.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at z = 5, ray moving in z-direction
-void line_plane_ShouldBeTrue2() {
-    glm::vec3 a(2.0f, 0.0f, -2.0f);
-    glm::vec3 b(2.0f, 0.0f, 10.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, 5.0f); // Plane at z = 5
-    glm::vec3 norm(0.0f, 0.0f, 1.0f); // Plane normal along z
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at z = -5, but ray is going the opposite direction
-void line_plane_ShouldBeFalse2() {
-    glm::vec3 a(2.0f, 0.0f, -10.0f);
-    glm::vec3 b(2.0f, 0.0f, -6.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, -5.0f);
-    glm::vec3 norm(0.0f, 0.0f, 1.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at x = 3, ray moving in x-direction
-void line_plane_ShouldBeTrue3() {
-    glm::vec3 a(-5.0f, 2.0f, 0.0f);
-    glm::vec3 b(6.0f, 2.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(3.0f, 0.0f, 0.0f); // Plane at x = 3
-    glm::vec3 norm(1.0f, 0.0f, 0.0f); // Plane normal along x
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane at x = 8, but ray never reaches it
-void line_plane_ShouldBeFalse3() {
-    glm::vec3 a(-5.0f, 2.0f, 0.0f);
-    glm::vec3 b(4.0f, 2.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(8.0f, 0.0f, 0.0f);
-    glm::vec3 norm(1.0f, 0.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Diagonal plane cutting through the origin
-void line_plane_ShouldBeTrue4() {
-    glm::vec3 a(0.0f, 5.0f, 5.0f);
-    glm::vec3 b(0.0f, -5.0f, -5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 0.0f, 0.0f); // Plane at y = z
-    glm::vec3 norm(0.0f, 1.0f, -1.0f); // Normal pointing along (0,1,-1)
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Parallel case, no intersection
-void line_plane_ShouldBeFalse4() {
-    glm::vec3 a(1.0f, 2.0f, 3.0f);
-    glm::vec3 b(1.0f, 4.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(0.0f, 1.0f, 0.0f);
-    glm::vec3 norm(0.0f, 1.0f, -1.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Plane tilted diagonally in x-y
-void line_plane_ShouldBeTrue5() {
-    glm::vec3 a(0.0f, 10.0f, 5.0f);
-    glm::vec3 b(10.0f, 0.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(5.0f, 5.0f, 5.0f); // Plane at x + y = 10
-    glm::vec3 norm(1.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-// Ray goes away from plane, no intersection
-void line_plane_ShouldBeFalse5() {
-    glm::vec3 a(0.0f, 10.0f, 5.0f);
-    glm::vec3 b(-10.0f, 20.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(5.0f, 5.0f, 5.0f);
-    glm::vec3 norm(1.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
 }

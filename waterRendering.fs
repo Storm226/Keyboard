@@ -9,7 +9,7 @@ in vec3 cameraPos;
 uniform vec3 lightPosWorld;
 uniform vec3 lightColor;
 uniform vec3 objectColor;
-uniform mat3 View;
+uniform mat3 view;
 
 uniform sampler2D normalMap;
 uniform sampler2D reflectionMap;
@@ -19,7 +19,7 @@ void main() {
     vec3 normalColor = texture(normalMap, texCoord).rgb;
     vec3 norm = normalize(normalColor);
 
-    vec3 lightPos = vec3(View * lightPosWorld);
+    vec3 lightPos = vec3(view * lightPosWorld);
 
     // ambient
     float ambientStrength = 0.1;
@@ -46,16 +46,16 @@ void main() {
     float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), 5.0);
 
     //cube map reflection
-    vec3 reflecteddir = reflect(-viewdir, norm);
-    vec3 reflectioncolor = texture(skybox, reflecteddir).rgb;
+    vec3 reflecteDir = reflect(-viewDir, norm);
+    vec3 reflectionColor = texture(skybox, reflectedDir).rgb;
 
     //disort reflection w normal
     //vec2 distortion = norm.xz * 0.02;
     //vec2 distortionUV = texCoord + distortion;
     //vec3 reflectionColor = texture(reflectionMap, distortionUV).rgb;
 
-    vec3 finalcolor = mix(result, reflectioncolor, fresnel);
+    vec3 finalColor = mix(result, reflectionColor, fresnel);
 
-    //color = vec4(finalcolor, 1.0);
+    //color = vec4(finalColor, 1.0);
     color = vec4(1, 0, 0, 1);
 }
