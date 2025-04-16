@@ -34,7 +34,8 @@ int main(int argc, char** argv)
     glm::mat4 perspective;
     glm::mat4 camera_viewprojection;
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnable(GL_DEPTH_TEST);
 
     s.use();
 
@@ -63,10 +64,9 @@ int main(int argc, char** argv)
             glBindVertexArray(obj_VAO);
 
             glPatchParameteri(GL_PATCH_VERTICES, 4); // use 3 or 4 depending on what your tess shader expects
-            glDrawArrays(GL_PATCHES, 0, 6);
+            glDrawArrays(GL_PATCHES, 0, 4);
 
             std::cout << camera.Pitch << "\n";
-
 
             glfwSwapBuffers(window);
             glfwPollEvents();
