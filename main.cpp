@@ -20,39 +20,23 @@
 // position, up, pitch, yaw
 
 
-Camera camera(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f); 
-Camera projector(glm::vec3(0.0f, 7.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f);
-
+Camera camera(glm::vec3(0.0f,5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f); 
 
 int main(int argc, char** argv)
 {
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
 
-    Shader s("Shaders/geo.vs", "Shaders/basic_object_shader.fs");
+    Shader s("Shaders/Plane.vs", "Shaders/basic_object_shader.fs", nullptr,  "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
     GLuint obj_VAO, obj_VBO;
 
-    // STEP ONE: 
-    // define the camera and its matrices, and also 
-    // get information needed for projector from camera
     glm::mat4 view;
     glm::mat4 perspective;
     glm::mat4 camera_viewprojection;
-    // we also are interested in defining our projector, which is kinda basically a camera
-    glm::mat4 projector_view;
-    glm::mat4 M_Projector;
-    std::vector<glm::vec3> intersections;
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     s.use();
-
-    line_plane_tests();
-
-    int foundCount = 0;
-    int notFoundCount = 0;
-
-
-    // theory   ----- MVP
-    // glm/glsl ----- PVM
 
         //render loop
         // ----------------------------------
@@ -68,81 +52,21 @@ int main(int argc, char** argv)
 
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
-            camera_viewprojection = perspective * view;
-
-            projector_view = projector.GetViewMatrix();
-            M_Projector = glm::inverse( perspective * projector_view);
-
-            // check to see if camera frustum intersects with the bounding water volume 
-            // in world space, if so initalize those intersection points into intersections list
-            bool worldSpaceIntersection;
-            if (worldSpaceIntersection = checkWorldSpaceIntersection(intersections, camera_viewprojection)) {
-                std::cout << "World space intersections detected \n";
-
-                // the paper says we must project onto base plane all intersecting points
-                project_onto_base_plane(intersections);
-
-                // then we define a grid from the x and y span and also build a matrix 
-                // which will transform the [0, 1] grid  onto the span of water 
-                glm::mat4 range = generate_range_matrix(intersections, glm::inverse(M_Projector));
+           
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "View"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "Projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
 
 
-                M_Projector = M_Projector * range;
+            s.use();
+            glGenVertexArrays(1, &obj_VAO);
+            glBindVertexArray(obj_VAO);
 
+            glPatchParameteri(GL_PATCH_VERTICES, 4); // use 3 or 4 depending on what your tess shader expects
+            glDrawArrays(GL_PATCHES, 0, 6);
 
-                // this is the grid as defined in the paper from (0, 1)
-                // later on we will have a way to define the u,v coordinates
-                // s.t. we will be able to sample our noise/ T.Waves / Height function
-                std::vector<glm::vec3> pre_transform_vertices =
-                { glm::vec3(0.0f, 0.0f, -1.0f),       // near left   z = -1
-                  glm::vec3(0.0f, 0.0f,  1.0f),       // near left   z = 1
+            std::cout << camera.Pitch << "\n";
 
-                  glm::vec3(1.0f, 0.0f, -1.0f),       // near right
-                  glm::vec3(1.0f, 0.0f,  1.0f),       // near right
-
-                  glm::vec3(1.0f, 1.0f, -1.0f),       // far left
-                  glm::vec3(1.0f, 1.0f,  1.0f),       // far left
-
-                  glm::vec3(1.0f, 1.0f, -1.0f),       // far right
-                  glm::vec3(1.0f, 1.0f,  1.0f) };      // far right
-
-
-
-
-
-                // we transform each vertex in the grid twice, once at z = -1 and again at z = + 1
-                // thats the reason why the four corners are each defined twice
-                // then we find the intersection of those points against the base plane (the base plane of the water volume)
-                // the intersetions of those line segments against the plane are the vertices we want to render. 
-                std::vector<glm::vec3> final_vertices;
-                for (int i = 0; i < 8; i += 2) {
-                    glm::vec3 a = M_Projector * glm::vec4(pre_transform_vertices[i], 1.0f);
-                    glm::vec3 b = M_Projector * glm::vec4(pre_transform_vertices[i + 1], 1.0f);
-                    glm::vec3 intersection;
-                    if (!lineSegmentPlaneIntersection(intersection, a, b, s_base.norm, s_base.point)) {
-                        std::cout << "Intersection not found at step 2.4.6 \n";
-                        notFoundCount++;
-                        std::cout << "Not found count : " << notFoundCount << "\n";
-                    }
-                        
-                    else {
-                        final_vertices.push_back(intersection);
-                        std::cout << "Intersection FOUND found at step 2.4.6 \n";
-                        foundCount++;
-                        std::cout << "Found count : " << foundCount << "\n";
-                    }
-                        
-                }
-
-
-                std::cout <<  "Final vertices size : " << final_vertices.size() << "\n";
-                
-                if (worldSpaceIntersection && final_vertices.size() >= 3) {
-                    s.use();
-                    populate_buffer(obj_VAO, obj_VBO, final_vertices, false, false);
-                    draw(obj_VAO, final_vertices);
-                }
-            }
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -154,168 +78,8 @@ int main(int argc, char** argv)
 }
 
 
-
-// the role of this function is to generate a matrix which defines a transformation from (0, 1) onto the span of the 
-// visible volume in screen space
-glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 inverse_M_Projector) {
-
-    // so now we wanna transform the points in the buffer to projector space by using inverse of M_projector
-    // the x and y span of the visible volume is now the x/y spans of the points in the buffer
-
-    float Xmin, Xmax, Ymin, Ymax;
-
-    // we can do this transformation and also compute the minX/maxX minY/maxY
-    for (int i = 0; i < intersections.size(); i++) {
-
-        // in spirit we want the inverse, which should be the second line not the first as i had
-         // intersections[i] = glm::vec4(intersections[i], 0) * glm::inverse(M_Projector);
-            intersections[i] = inverse_M_Projector * glm::vec4(intersections[i], 1);
-            if (i == 0) {
-                Xmin = intersections[i].x;
-                Xmax = intersections[i].x;
-                Ymin = intersections[i].z;
-                Ymax = intersections[i].z;
-
-                continue;
-            }
-
-        if (intersections[i].x < Xmin)
-            Xmin = intersections[i].x;
-        else if (intersections[i].x > Xmax)
-            Xmax = intersections[i].x;
-
-        // z span
-        if (intersections[i].z < Ymin)
-            Ymin = intersections[i].z;
-        else if (intersections[i].z > Ymax)
-            Ymax = intersections[i].z;
-    }
-
-
-    // define the range matrix to augment the m_projector matrix
-    glm::mat4 range = glm::mat4(1.0);
-    range[0][0] = Xmax - Xmin;
-    range[3][0] = Xmin;
-    range[1][1] = Ymax - Ymin;
-    range[3][1] = Ymin;
-
-    return range;
-}
-
-// the paper says we need to project world space positions onto the s_base plane
-// i dont remember why right now
-void project_onto_base_plane(std::vector<glm::vec3>& intersections) {
-    // Project all points in buffer onto plane
-    for (int i = 0; i < intersections.size(); i++) {
-
-        // if the point is above the plane, we wanna decrease its vertical position
-        // if the point is below, we wanna increment its position
-        bool above = intersections[i].y > s_base.point.y;
-        float distance_to_base_plane = glm::abs(intersections[i].y - s_base.point.y);
-
-        if (above)
-            intersections[i] -= s_base.norm * distance_to_base_plane;
-        else
-            intersections[i] += s_base.norm * distance_to_base_plane;
-    }
-}
-
-
-// so what this method is trying to do is look at the corners of the camera frustum and 
-// convert the screen space coordinates into world space, then from there we can check 
-// each edge of the camera frustum in world space against the upper and lower bounding 
-// planes of what will become our water volume. If intersections are detected, then we
-// can see and so should draw our water volume at those positions, eventually. 
-bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 viewprojection) {
-
-    // STEP TWO:
-    // determine if any of the displaceable volume is within the camera frustum
-    // if not, don't bother drawing
-    bool worldSpaceIntersection = false;
-
-    glm::vec3 frustumCorners[8] = {
-      {-1,  1, -1}, // Near Top Left
-      { 1,  1, -1}, // Near Top Right
-      {-1, -1, -1}, // Near Bottom Left
-      { 1, -1, -1}, // Near Bottom Right
-      {-1,  1,  1}, // Far Top Left
-      { 1,  1,  1}, // Far Top Right
-      {-1, -1,  1}, // Far Bottom Left
-      { 1, -1,  1}  // Far Bottom Right
-    };
-
-    for (int i = 0; i < 8; i++) {
-        glm::vec4 corner = glm::inverse(viewprojection) * glm::vec4(frustumCorners[i], 1.0f);
-        frustumCorners[i] = glm::vec3(corner) / corner.w; 
-    }
-
-    int frustumEdges[12][2] = {
-        {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near plane edges
-        {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far plane edges
-        {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting edges
-    };
-
-
-
-
-    // Check for intersections between the edges of the camera frustum and the bound planes (Supper and
-    // Slower).Store the world - space positions of all intersections in a buffer
-
-    for (int i = 0; i < 12; i++) {
-        glm::vec3 contact;
-        int a = frustumEdges[i][0];
-        int b = frustumEdges[i][1];
-
-        if (lineSegmentPlaneIntersection(contact, frustumCorners[a], frustumCorners[b], s_upper.norm, s_upper.point))
-            intersections.push_back(contact);
-        if (lineSegmentPlaneIntersection(contact, frustumCorners[a], frustumCorners[b], s_lower.norm, s_lower.point))
-            intersections.push_back(contact);
-    }
-
-
-    for (int i = 0; i < 8; i++) {
-        if (frustumCorners[i].y < s_upper.point.y && frustumCorners[i].y > s_lower.point.y)
-            intersections.push_back(frustumCorners[i]);
-    }
-
-    return intersections.size() > 0;
-
-}
-
-
 void printVec(glm::vec3 v) {
     std::cout << "x: " << v.x << ", " << "y: " << v.y << ", " << "z: " << v.z << "\n";
-}
-
-bool lineSegmentPlaneIntersection(glm::vec3& contact, glm::vec3 a, glm::vec3 b,
-    glm::vec3 normal, glm::vec3 coord) {
-    // Normalize the normal vector to ensure consistent magnitude
-    normal = glm::normalize(normal);
-
-    // Calculate the plane constant (d) for the equation of the plane: normal.x * x + normal.y * y + normal.z * z = d
-    float d = glm::dot(normal, coord);
-
-    // Calculate the ray direction (b - a) and the dot product of the normal with the ray direction
-    glm::vec3 ray = b - a;
-    float denom = glm::dot(normal, ray);
-
-    // If the denominator is very close to zero, the line is parallel to the plane
-    if (glm::abs(denom) < 1e-6f) {
-        return false; // No intersection
-    }
-
-    // Calculate the parameter t of the intersection point
-    float t = (d - glm::dot(normal, a)) / denom;
-
-    // If t is outside the segment (0 <= t <= 1), return false
-    if (t < 0.0f || t > 1.0f) {
-        return false;
-    }
-
-    // The contact point on the line segment
-    contact = a + t * ray;
-
-    return true; // There's an intersection within the segment bounds
 }
 
 
@@ -331,7 +95,7 @@ void load_image(std::vector<unsigned char>& image, std::string filepath) {
 // Draws TRIANGLES using input VAO/vertices
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices) {
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_POINTS, 0, obj_vertices.size());
     glBindVertexArray(0);
 }
 
@@ -495,85 +259,4 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-}
-
-
-// some of these tests seem to fail
-// further investigation is needed
-void line_plane_tests() {
-    line_plane_ShouldBeTrue1();
-    line_plane_ShouldBeTrue2();
-    line_plane_ShouldBeTrue3();
-    line_plane_ShouldBeFalse1();
-
-
-}
-
-
-void line_plane_ShouldBeTrue1() {
-    glm::vec3 a(0.0f, 10.0f, 0.0f);
-    glm::vec3 b(0.0f, -20.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-   
-    glm::vec3 p = s_upper.point;
-    glm::vec3 norm = s_upper.norm;
-
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-void line_plane_ShouldBeTrue2() {
-    glm::vec3 a(30.0f, 12.0f, 0.0f);
-    glm::vec3 b(30.0f, -40.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-
-    glm::vec3 p = s_upper.point;
-    glm::vec3 norm = s_upper.norm;
-
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-void line_plane_ShouldBeTrue3() {
-    glm::vec3 a(13.0f, -6.0f, 13.0f);
-    glm::vec3 b(30.0f, -40.0f, 5.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-
-    glm::vec3 p = s_lower.point;
-    glm::vec3 norm = s_lower.norm;
-
-    glm::vec3 c;
-
-    if (lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
-}
-
-
-
-void line_plane_ShouldBeFalse1() {
-    glm::vec3 a(0.0f, -10.0f, 0.0f);
-    glm::vec3 b(0.0f, -20.0f, 0.0f);
-    glm::vec3 ray = b - a;
-    glm::vec3 ray_origin = a;
-    glm::vec3 p(1.0f, 1.0f, 0.0f);
-    glm::vec3 norm(0.0f, 1.0f, 0.0f);
-    glm::vec3 c;
-
-    if (!lineSegmentPlaneIntersection(c, a, b, norm, p))
-        std::cout << "PASS\n";
-    else
-        std::cout << "FAIL\n";
 }

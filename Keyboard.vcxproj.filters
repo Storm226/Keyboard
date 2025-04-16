@@ -103,6 +103,9 @@
     <None Include="Shaders\geo.gs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\Plane.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg">
@@ -120,5 +123,13 @@
     <Image Include="Resources\Perlin_noise_example.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Shaders\tess_control.txt">
+      <Filter>Shaders</Filter>
+    </Text>
+    <Text Include="Shaders\tess_eval.txt">
+      <Filter>Shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>
