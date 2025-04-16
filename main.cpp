@@ -20,8 +20,8 @@
 // position, up, pitch, yaw
 
 
-Camera camera(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f); 
-Camera projector(glm::vec3(0.0f, 12.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f);
+Camera camera(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f); 
+Camera projector(glm::vec3(0.0f, 7.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -45.0f, 0.0f);
 
 
 int main(int argc, char** argv)
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
                 // which will transform the [0, 1] grid  onto the span of water 
                 glm::mat4 range = generate_range_matrix(intersections, glm::inverse(M_Projector));
 
-                
+
                 M_Projector = M_Projector * range;
 
 
@@ -173,8 +173,8 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
             if (i == 0) {
                 Xmin = intersections[i].x;
                 Xmax = intersections[i].x;
-                Ymin = intersections[i].y;
-                Ymax = intersections[i].y;
+                Ymin = intersections[i].z;
+                Ymax = intersections[i].z;
 
                 continue;
             }
@@ -184,11 +184,11 @@ glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 
         else if (intersections[i].x > Xmax)
             Xmax = intersections[i].x;
 
-        // y span
-        if (intersections[i].y < Ymin)
-            Ymin = intersections[i].y;
-        else if (intersections[i].y > Ymax)
-            Ymax = intersections[i].y;
+        // z span
+        if (intersections[i].z < Ymin)
+            Ymin = intersections[i].z;
+        else if (intersections[i].z > Ymax)
+            Ymax = intersections[i].z;
     }
 
 
