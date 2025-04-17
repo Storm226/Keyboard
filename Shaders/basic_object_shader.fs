@@ -55,7 +55,7 @@ void main() {
 
     vec3 finalColor = mix(result, reflectionColor, fresnel);
 
-    //color = vec4(finalColor, 1.0);
-    color = vec4(diffuseColor, 1.0);
+    color = vec4(finalColor, 1.0);
+    //color = vec4(diffuseColor, 1.0);
     //color = vec4(1, 1, 1, 1);
 }
