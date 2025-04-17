@@ -76,8 +76,8 @@ GLuint cubemapTexture;
 //};
 
 std::vector<std::string> faces = {
-    "miramar_rt.png",
     "miramar_lf.png",
+    "miramar_rt.png",
     "miramar_up.png",
     "miramar_dn.png",
     "miramar_ft.png",
