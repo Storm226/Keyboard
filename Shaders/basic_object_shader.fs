@@ -42,7 +42,7 @@ void main() {
     float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), 5.0);
 
     //cube map reflection
-    vec3 reflecteDir = reflect(-viewDir, norm);
+    vec3 reflectedDir = reflect(-viewDir, norm);
     vec3 reflectionColor = texture(skybox, reflectedDir).rgb;
 
     //disort reflection w normal
