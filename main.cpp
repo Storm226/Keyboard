@@ -171,9 +171,9 @@ int main(int argc, char** argv)
             float time = glfwGetTime();
             glUniform1f(glGetUniformLocation(s.ID, "time"), time);
 
-            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
-            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "skybox"), 1, GL_FALSE, glm::value_ptr(perspective));
+            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "skybox"), 1, GL_FALSE, glm::value_ptr(perspective));
 
 
             s.use();
@@ -184,11 +184,17 @@ int main(int argc, char** argv)
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
             glDrawArrays(GL_PATCHES, 0, 4);
 
+            glDepthFunc(GL_LEQUAL);
             skybox.use();
+            view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+            skybox.setMat4("view", view);
+            skybox.setMat4("projection", perspective);
             glBindVertexArray(skyboxVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDepthMask(GL_FALSE);
             glDrawArrays(GL_TRIANGLES, 0, 36);
+            glDepthMask(GL_TRUE);
             glBindVertexArray(0);
             glDepthFunc(GL_LESS);
 
