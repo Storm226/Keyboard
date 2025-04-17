@@ -179,18 +179,7 @@ int main(int argc, char** argv)
             float time = glfwGetTime();
             glUniform1f(glGetUniformLocation(s.ID, "time"), time);
 
-            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
-            //glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "skybox"), 1, GL_FALSE, glm::value_ptr(perspective));
-
-
-            s.use();
-            glPatchParameteri(GL_PATCH_VERTICES, 4); 
-            glBindVertexArray(obj_VAO);
-            glPatchParameteri(GL_PATCH_VERTICES, 4); 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-            glDrawArrays(GL_PATCHES, 0, 4);
+            glBindVertexArray(0);
 
             glDepthFunc(GL_LEQUAL);
             skybox.use();
@@ -205,6 +194,14 @@ int main(int argc, char** argv)
             glDepthMask(GL_TRUE);
             glBindVertexArray(0);
             glDepthFunc(GL_LESS);
+
+            s.use();
+            glPatchParameteri(GL_PATCH_VERTICES, 4); 
+            glBindVertexArray(obj_VAO);
+            glPatchParameteri(GL_PATCH_VERTICES, 4); 
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDrawArrays(GL_PATCHES, 0, 4);
 
             std::cout << camera.Pitch << "\n";
 
