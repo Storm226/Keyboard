@@ -65,14 +65,16 @@ vec3 getDisplacedPosition(vec2 uv) {
     float amp = 1.0;
     float alpha = 0.5;
     float displacement = 0.0;
+    float persistance = 0.5;
 
     for (int i = 0; i < 5; ++i) {
-        displacement += perlinNoise((uv + time * 0.1) * freq) * amp;
+        vec2 animatedUV = uv * freq + vec2(time * 0.1);
+        displacement += perlinNoise(animatedUV) * amp;
         freq *= 2.0;
-        amp *= alpha;
+        amp *= persistence;
     }
-
-    return vec3(uv.x, displacement * 0.2, uv.y); // note: uv = xz
+    
+    return vec3(uv.x, displacement * 0.1, uv.y); // note: uv = xz
 }
 
 vec4 interpolate(vec4 v0, vec4 v1, vec4 v2, vec4 v3) {
