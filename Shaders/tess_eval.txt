@@ -65,7 +65,7 @@ vec3 getDisplacedPosition(vec2 uv) {
     float amp = 1.0;
     float alpha = 0.5;
     float displacement = 0.0;
-    float persistance = 0.5;
+    float persistence = 0.5;
 
     for (int i = 0; i < 5; ++i) {
         vec2 animatedUV = uv * freq * 0.2 + vec2(time * 0.1);
