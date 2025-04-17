@@ -41,7 +41,6 @@ void main() {
     // fresnel
     float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), 5.0);
 
-
     color = vec4(result, 1.0);
     //color = vec4(1, 1, 1, 1);
 }

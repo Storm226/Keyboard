@@ -5,8 +5,6 @@
 #include "Headers/Camera.h"
 
 #include "Headers/lodepng.h"
-
-
 #include "Headers/definitions.h"
 
 #include <iostream>
@@ -15,9 +13,6 @@
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-
-// position, up, pitch, yaw
 
 
 Camera camera(glm::vec3(0.0f,5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f); 
