@@ -143,6 +143,14 @@ int main(int argc, char** argv)
     glUseProgram(s.ID);
     glUniform1i(glGetUniformLocation(s.ID, "skybox"), 0);    
 
+    std::vector<glm::vec3> patchVerts = {
+        {-1.0f, 0.0f, -1.0f},
+        { 1.0f, 0.0f, -1.0f},
+        { 1.0f, 0.0f,  1.0f},
+        {-1.0f, 0.0f,  1.0f}
+    };
+
+    populate_buffer(obj_VAO, obj_VBO, patchVerts, false, false);
         //render loop
         // ----------------------------------
         while (!glfwWindowShouldClose(window))
@@ -177,7 +185,7 @@ int main(int argc, char** argv)
 
 
             s.use();
-            glGenVertexArrays(1, &obj_VAO);
+            glPatchParameteri(GL_PATCH_VERTICES, 4); 
             glBindVertexArray(obj_VAO);
             glPatchParameteri(GL_PATCH_VERTICES, 4); 
             glActiveTexture(GL_TEXTURE0);
