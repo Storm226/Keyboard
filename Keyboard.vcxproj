@@ -83,8 +83,8 @@
     <IncludePath>D:\CS5610,6610Projects\FinalProject\GLFW\GLFW;D:\CS5610,6610Projects\FinalProject\GLFW\GLFW\glm;D:\CS5610,6610Projects\FinalProject\GLFW\GLFW\glad;C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\CS5610,6610Projects\FinalProject\GLFW;C:\Users\18045\Programming\Libraries\GLAD;C:\Users\18045\Programming\Libraries\GLFW\lib-vc2022;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\CS5610,6610Projects\FinalProject\GLFW\GLFW;D:\CS5610,6610Projects\FinalProject\GLFW\GLFW\glm;D:\CS5610,6610Projects\FinalProject\GLFW\GLFW\glad;C:\Users\18045\Programming\Libraries\GLAD\include;C:\Users\18045\Programming\Libraries\GLFW\include;C:\Users\18045\Programming\Libraries\GLM;C:\Users\18045\Programming\Libraries\Assimp\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -146,7 +146,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\18045\Programming\Libraries\Assimp;C:\Users\18045\Programming\Libraries;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

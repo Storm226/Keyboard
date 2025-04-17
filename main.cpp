@@ -138,6 +138,18 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    unsigned width, height;
+    std::vector<unsigned char> image;
+    lodepng::decode(image, width, height, "water3.png");
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     s.use();
     cubemapTexture = loadCubemap(faces);
     glUseProgram(s.ID);
@@ -196,11 +208,10 @@ int main(int argc, char** argv)
             glDepthFunc(GL_LESS);
 
             s.use();
-            glPatchParameteri(GL_PATCH_VERTICES, 4); 
             glBindVertexArray(obj_VAO);
             glPatchParameteri(GL_PATCH_VERTICES, 4); 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, texture);
             glDrawArrays(GL_PATCHES, 0, 4);
 
             std::cout << camera.Pitch << "\n";
