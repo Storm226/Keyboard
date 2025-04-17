@@ -183,6 +183,8 @@
     <None Include="Shaders\Plane.vs" />
     <None Include="Shaders\shadowmap.fs" />
     <None Include="Shaders\shadowmap.vs" />
+    <None Include="skybox.fs" />
+    <None Include="skybox.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg" />

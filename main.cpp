@@ -119,6 +119,7 @@ int main(int argc, char** argv)
         std::cout << "FAILURE DURING SETUP\n";
 
     Shader s("Shaders/Plane.vs", "Shaders/basic_object_shader.fs", nullptr,  "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
+    Shader skybox("skybox.vs", "skybox.fs", nullptr, nullptr, nullptr);
     GLuint obj_VAO, obj_VBO;
 
     glm::mat4 view;
@@ -170,6 +171,10 @@ int main(int argc, char** argv)
             float time = glfwGetTime();
             glUniform1f(glGetUniformLocation(s.ID, "time"), time);
 
+            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            glUniformMatrix4fv(glGetUniformLocation(skybox.ID, "skybox"), 1, GL_FALSE, glm::value_ptr(perspective));
+
 
             s.use();
             glGenVertexArrays(1, &obj_VAO);
@@ -178,6 +183,14 @@ int main(int argc, char** argv)
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
             glDrawArrays(GL_PATCHES, 0, 4);
+
+            skybox.use();
+            glBindVertexArray(skyboxVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glBindVertexArray(0);
+            glDepthFunc(GL_LESS);
 
             std::cout << camera.Pitch << "\n";
 

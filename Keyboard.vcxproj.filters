@@ -106,6 +106,8 @@
     <None Include="Shaders\Plane.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="skybox.vs" />
+    <None Include="skybox.fs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\huh.jpg">
