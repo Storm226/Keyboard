@@ -1,5 +1,5 @@
 ﻿#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,6 +17,55 @@
 
 
 Camera camera(glm::vec3(0.0f,5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f); 
+
+GLuint cubemapTexture;
+// Cube map faces
+//std::vector<std::string> faces = {
+//    "cubemap/cubemap_posx.png",
+//    "cubemap/cubemap_negx.png",
+//    "cubemap/cubemap_posy.png",
+//    "cubemap/cubemap_negy.png",
+//    "cubemap/cubemap_posz.png",
+//    "cubemap/cubemap_negz.png"
+//};
+
+std::vector<std::string> faces = {
+    "miramar_rt.png",
+    "miramar_lf.png",
+    "miramar_up.png",
+    "miramar_dn.png",
+    "miramar_ft.png",
+    "miramar_bk.png"
+};
+
+GLuint loadCubemap(std::vector<std::string> faces) {
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	unsigned width, height;
+	std::vector<unsigned char> image;
+
+	for (GLuint i = 0; i < faces.size(); i++) {
+		image.clear();
+		if (lodepng::decode(image, width, height, faces[i]) == 0) {
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA,
+				width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+		}
+		else {
+			std::cout << "Failed to load cubemap texture: " << faces[i] << std::endl;
+		}
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -33,6 +83,9 @@ int main(int argc, char** argv)
     glEnable(GL_DEPTH_TEST);
 
     s.use();
+    cubemapTexture = loadCubemap(faces);
+    glUseProgram(s.ID);
+    glUniform1i(glGetUniformLocation(s.ID, "environmentMap"), 0);    
 
         //render loop
         // ----------------------------------
@@ -64,6 +117,8 @@ int main(int argc, char** argv)
             glGenVertexArrays(1, &obj_VAO);
             glBindVertexArray(obj_VAO);
             glPatchParameteri(GL_PATCH_VERTICES, 4); 
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
             glDrawArrays(GL_PATCHES, 0, 4);
 
             std::cout << camera.Pitch << "\n";
