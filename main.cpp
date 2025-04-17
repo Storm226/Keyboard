@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     glm::mat4 perspective;
     glm::mat4 camera_viewprojection;
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
 
     s.use();
@@ -54,16 +54,18 @@ int main(int argc, char** argv)
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
            
-            glUniformMatrix4fv(glGetUniformLocation(s.ID, "View"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(glGetUniformLocation(s.ID, "Projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
             glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
+
+            float time = glfwGetTime();
+            glUniform1f(glGetUniformLocation(s.ID, "time"), time);
 
 
             s.use();
             glGenVertexArrays(1, &obj_VAO);
             glBindVertexArray(obj_VAO);
-
-            glPatchParameteri(GL_PATCH_VERTICES, 4); // use 3 or 4 depending on what your tess shader expects
+            glPatchParameteri(GL_PATCH_VERTICES, 4); 
             glDrawArrays(GL_PATCHES, 0, 4);
 
             std::cout << camera.Pitch << "\n";

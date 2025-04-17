@@ -12,8 +12,8 @@ const vec3 Pos[4] = vec3[](
 
 void main() {
     vec3 vPos = Pos[gl_VertexID];
-    vPos.x += cameraWorldPosition.x;
-    vPos.z += cameraWorldPosition.z;
+  //  vPos.x += cameraWorldPosition.x;
+   // vPos.z += cameraWorldPosition.z;
     position = vPos;
     gl_Position = vec4(vPos, 1.0);
 }

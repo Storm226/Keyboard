@@ -7,7 +7,6 @@ in vec3 position[];
 
 void main() {
 
-    int tess_level = 25;
     gl_TessLevelOuter[0] = 25;
     gl_TessLevelOuter[1] = 25;
     gl_TessLevelOuter[2] = 25;
