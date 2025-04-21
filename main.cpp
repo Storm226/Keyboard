@@ -16,6 +16,8 @@
 
 
 Camera camera(glm::vec3(0.0f,5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f); 
+Camera projector(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f);
+
 
 int main(int argc, char** argv)
 {
@@ -27,7 +29,8 @@ int main(int argc, char** argv)
 
     glm::mat4 view;
     glm::mat4 perspective;
-    glm::mat4 camera_viewprojection;
+    glm::mat4 projector_view;
+   
 
    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
@@ -48,9 +51,13 @@ int main(int argc, char** argv)
 
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+            projector_view = projector.GetViewMatrix();
+
            
             glUniformMatrix4fv(glGetUniformLocation(s.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
             glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "projector_view"), 1, GL_FALSE, glm::value_ptr(projector_view));
+
             glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
             glUniform3f(glGetUniformLocation(s.ID, "lightPosWorld"), 15.0f, 30.0f, -15.0f);
             glUniform3f(glGetUniformLocation(s.ID, "lightColor"), 1.0f, 1.0f, 1.0f);
