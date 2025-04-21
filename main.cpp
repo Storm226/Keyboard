@@ -24,12 +24,23 @@ int main(int argc, char** argv)
     if (!setUp())
         std::cout << "FAILURE DURING SETUP\n";
 
-    Shader s("Shaders/Plane.vs", "Shaders/basic_object_shader.fs", nullptr,  "Shaders/tess_control.txt", "Shaders/tess_eval.txt");
+    Shader s("Shaders/Plane.vs", "Shaders/basic_object_shader.fs", nullptr, nullptr, nullptr);
     GLuint obj_VAO, obj_VBO;
 
     glm::mat4 view;
     glm::mat4 perspective;
     glm::mat4 projector_view;
+
+    std::vector<glm::vec3> plane_vertices;
+    plane_vertices.reserve(100 * 100); // Reserve space for efficiency
+
+    for (int y = 0; y < 100; ++y) {
+        for (int x = 0; x < 100; ++x) {
+            plane_vertices.emplace_back(static_cast<float>(x), static_cast<float>(y), 0.0f);
+        }
+    }
+
+    populate_buffer(obj_VAO, obj_VBO, plane_vertices, false, false);
    
 
    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -58,10 +69,6 @@ int main(int argc, char** argv)
             glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
             glUniformMatrix4fv(glGetUniformLocation(s.ID, "projector_view"), 1, GL_FALSE, glm::value_ptr(projector_view));
 
-            glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
-            glUniform3f(glGetUniformLocation(s.ID, "lightPosWorld"), 15.0f, 30.0f, -15.0f);
-            glUniform3f(glGetUniformLocation(s.ID, "lightColor"), 1.0f, 1.0f, 1.0f);
-            glUniform3f(glGetUniformLocation(s.ID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
             float time = glfwGetTime();
             glUniform1f(glGetUniformLocation(s.ID, "time"), time);
@@ -70,8 +77,8 @@ int main(int argc, char** argv)
             s.use();
             glGenVertexArrays(1, &obj_VAO);
             glBindVertexArray(obj_VAO);
-            glPatchParameteri(GL_PATCH_VERTICES, 4); 
-            glDrawArrays(GL_PATCHES, 0, 4);
+            //glPatchParameteri(GL_PATCH_VERTICES, 4); 
+            glDrawArrays(GL_POINTS, 0, plane_vertices.size());
 
             std::cout << camera.Pitch << "\n";
 
