@@ -38,6 +38,13 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
 void load_image(std::vector<unsigned char>& image, std::string filepath);
 glm::vec3 aimAtHorizon(glm::vec3 camera_front, glm::vec3 projector_position);
+void setupPlaneMesh();
+
+glm::mat4 generate_range_matrix(std::vector<glm::vec3> intersections, glm::mat4 inverse_M_Projector);
+void project_onto_base_plane(std::vector<glm::vec3>& intersections);
+bool checkWorldSpaceIntersection(std::vector<glm::vec3>& intersections, glm::mat4 viewprojection);
+bool lineSegmentPlaneIntersection(glm::vec3& contact, glm::vec3 ray, glm::vec3 rayOrigin,
+    glm::vec3 normal, glm::vec3 coord);
 
 
 // settings
@@ -69,3 +76,17 @@ float lastFrame = 0.0f;
 bool wireframe = true;
 
 bool wireframeKeyPressedLastFrame = false;
+
+
+// Water rendering
+
+struct plane {
+    glm::vec3 point;
+    glm::vec3 norm;
+};
+
+// these are the world space positions of our upper and lower planes which 
+// together encaspulate the volume of displaced points
+plane s_upper = { glm::vec3(0.0f,  10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
+plane s_base = { glm::vec3(0.0f,    -0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
+plane s_lower = { glm::vec3(0.0f, -10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) };
