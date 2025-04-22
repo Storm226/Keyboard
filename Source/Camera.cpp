@@ -30,8 +30,9 @@ glm::mat4 Camera::GetViewMatrix()
 // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
-    std::cout << "Changing view\n";
+    std::cout << "Keypress Detected\n";
     float velocity = MovementSpeed * deltaTime;
+
     if (direction == FORWARD)
         Position += Front * velocity;
     if (direction == BACKWARD)
@@ -50,7 +51,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
 {
 
-    std::cout << "Changing view\n";
+    std::cout << "Mouse Scroll detected\n";
     xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 

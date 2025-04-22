@@ -59,9 +59,11 @@ public:
 
     void setSpeed(float new_speed);
 
-private:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();
+
+private:
+   
 };
 
 #endif

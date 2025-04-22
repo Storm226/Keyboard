@@ -15,8 +15,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-Camera camera(glm::vec3(0.0f,5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f); 
-Camera projector(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -84.0f, 0.0f);
+
+                // position                     // up                   // pitch, yawS
+Camera camera(glm::vec3(0.0f,20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -0.0f, 0.0f); 
+Camera projector(glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), -10.0f, -30.0f);
 
 
 int main(int argc, char** argv)
@@ -32,18 +34,40 @@ int main(int argc, char** argv)
     glm::mat4 projector_view;
 
     std::vector<glm::vec3> plane_vertices;
-    plane_vertices.reserve(100 * 100); // Reserve space for efficiency
+    plane_vertices.reserve((100 - 1) * (100 - 1) * 6); // 2 triangles per cell × 3 vertices
 
-    for (int y = 0; y < 100; ++y) {
-        for (int x = 0; x < 100; ++x) {
-            plane_vertices.emplace_back(static_cast<float>(x), static_cast<float>(y), 0.0f);
+    const int gridSize = 100;
+    const float step = 2.0f / (gridSize - 1); // from -1 to 1
+
+    for (int y = 0; y < gridSize - 1; ++y) {
+        for (int x = 0; x < gridSize - 1; ++x) {
+            // Convert to normalized coordinates in [-1, 1]
+            float x0 = -1.0f + x * step;
+            float x1 = -1.0f + (x + 1) * step;
+            float y0 = -1.0f + y * step;
+            float y1 = -1.0f + (y + 1) * step;
+
+            glm::vec3 topLeft = glm::vec3(x0, y0, 0.0f);
+            glm::vec3 topRight = glm::vec3(x1, y0, 0.0f);
+            glm::vec3 bottomLeft = glm::vec3(x0, y1, 0.0f);
+            glm::vec3 bottomRight = glm::vec3(x1, y1, 0.0f);
+
+            // Triangle 1: topLeft -> bottomLeft -> topRight
+            plane_vertices.push_back(topLeft);
+            plane_vertices.push_back(bottomLeft);
+            plane_vertices.push_back(topRight);
+
+            // Triangle 2: topRight -> bottomLeft -> bottomRight
+            plane_vertices.push_back(topRight);
+            plane_vertices.push_back(bottomLeft);
+            plane_vertices.push_back(bottomRight);
         }
     }
 
     populate_buffer(obj_VAO, obj_VBO, plane_vertices, false, false);
    
 
-   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+ 
     glEnable(GL_DEPTH_TEST);
 
     s.use();
@@ -54,6 +78,13 @@ int main(int argc, char** argv)
         {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+
+            if (!wireframe)
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            else
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+
             float currentFrame = static_cast<float>(glfwGetTime());
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
@@ -62,11 +93,13 @@ int main(int argc, char** argv)
 
             view = camera.GetViewMatrix();
             perspective = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, zNear, zFar);
+            projector.Front = aimAtHorizon(camera.Front, projector.Position);
+            projector.updateCameraVectors();
             projector_view = projector.GetViewMatrix();
 
            
-            glUniformMatrix4fv(glGetUniformLocation(s.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(glGetUniformLocation(s.ID, "projection"), 1, GL_FALSE, glm::value_ptr(perspective));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "camera_view"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(glGetUniformLocation(s.ID, "camera_projection"), 1, GL_FALSE, glm::value_ptr(perspective));
             glUniformMatrix4fv(glGetUniformLocation(s.ID, "projector_view"), 1, GL_FALSE, glm::value_ptr(projector_view));
 
 
@@ -75,12 +108,12 @@ int main(int argc, char** argv)
 
 
             s.use();
-            glGenVertexArrays(1, &obj_VAO);
-            glBindVertexArray(obj_VAO);
-            //glPatchParameteri(GL_PATCH_VERTICES, 4); 
-            glDrawArrays(GL_POINTS, 0, plane_vertices.size());
+            draw(obj_VAO, plane_vertices);
 
-            std::cout << camera.Pitch << "\n";
+            std::cout << "Camera Position : ";
+            printVec(camera.Position);
+            std::cout << "Projector Position : ";
+            printVec(projector.Position);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -89,6 +122,15 @@ int main(int argc, char** argv)
     cleanUp();
 
     return 0;
+}
+
+glm::vec3 aimAtHorizon(glm::vec3 camera_front, glm::vec3 projector_position) {
+    glm::vec3 dir = glm::normalize(camera_front);
+
+    float t = 30.0f;
+
+    return (dir * t) - projector_position;
+    
 }
 
 
@@ -109,7 +151,7 @@ void load_image(std::vector<unsigned char>& image, std::string filepath) {
 // Draws TRIANGLES using input VAO/vertices
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices) {
     glBindVertexArray(VAO);
-    glDrawArrays(GL_POINTS, 0, obj_vertices.size());
+    glDrawArrays(GL_TRIANGLES, 0, obj_vertices.size());
     glBindVertexArray(0);
 }
 
@@ -168,24 +210,54 @@ void cleanUp() {
 }
 
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        projector.ProcessKeyboard(FORWARD, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        projector.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        projector.ProcessKeyboard(LEFT, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        projector.ProcessKeyboard(RIGHT, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
         camera.ProcessKeyboard(UP, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        projector.ProcessKeyboard(UP, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
         camera.ProcessKeyboard(DOWN, deltaTime);
+        projector.ProcessKeyboard(DOWN, deltaTime);
+    }
+    // Wireframe toggle (on key press, not held)
+    bool wireframeKeyCurrentlyPressed = glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS;
+    if (wireframeKeyCurrentlyPressed && !wireframeKeyPressedLastFrame)
+    {
+        wireframe = !wireframe;
+        std::cout << "Wireframe mode: " << (wireframe ? "ON" : "OFF") << std::endl;
+        if (wireframe)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        else
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    wireframeKeyPressedLastFrame = wireframeKeyCurrentlyPressed;
 }
 
 // glfw: whenever the mouse moves, this callback is called

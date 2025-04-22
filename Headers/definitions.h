@@ -37,7 +37,7 @@ void populate_buffer(GLuint& VAO, GLuint& VBO, const std::vector<glm::vec3>& ver
     bool normals, bool tex_coords);
 void draw(GLuint& VAO, std::vector<glm::vec3> obj_vertices);
 void load_image(std::vector<unsigned char>& image, std::string filepath);
-
+glm::vec3 aimAtHorizon(glm::vec3 camera_front, glm::vec3 projector_position);
 
 
 // settings
@@ -51,7 +51,7 @@ GLFWwindow* window;
 // camera
 float cameraSpeed = 15.0f;
 float zNear = 1.0f;
-float zFar = 30.0f;
+float zFar = 300.0f;
 
 
 
@@ -66,4 +66,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+bool wireframe = true;
 
+bool wireframeKeyPressedLastFrame = false;
