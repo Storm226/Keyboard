@@ -1,4 +1,3 @@
-
 #version 460 core
 
 out vec4 color;
@@ -10,9 +9,9 @@ in vec3 fragPosWorld;
 uniform vec3 cameraWorldPosition;
 uniform vec3 lightPosWorld;
 uniform vec3 lightColor;
-uniform vec3 objectColor;
+uniform float fresnelStrength;
 
-//uniform sampler2D reflectionMap;
+
 uniform sampler2D uniformTexture;
 uniform samplerCube skybox;
 
@@ -43,16 +42,11 @@ void main() {
     vec3 result = (ambient + diffuse + specular);
 
     //fresnel
-    float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), 5.0);
+    float fresnel = pow(1.0 - clamp(dot(viewDir, norm), 0.0, 1.0), fresnelStrength);
 
     //cube map reflection
     vec3 reflectedDir = reflect(-viewDir, norm);
     vec3 reflectionColor = texture(skybox, reflectedDir).rgb;
-
-    //disort reflection w normal
-    //vec2 distortion = norm.xz * 0.02;
-    //vec2 distortionUV = texCoord + distortion;
-    //vec3 reflectionColor = texture(reflectionMap, distortionUV).rgb;
 
     vec3 finalColor = mix(result, reflectionColor, fresnel);
 

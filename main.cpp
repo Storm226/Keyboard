@@ -20,6 +20,8 @@
 Camera camera(glm::vec3(0.0f,20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -0.0f, 0.0f); 
 Camera projector(glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), -10.0f, -30.0f);
 std::vector<glm::vec3> plane_vertices;
+float amplitude = 1.0;
+float fresnelStrength = 5.0;
 
 float skyboxVertices[] = {
     // positions          
@@ -212,7 +214,10 @@ int main(int argc, char** argv)
             glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
             glUniform3f(glGetUniformLocation(s.ID, "lightPosWorld"), 15.0f, 30.0f, -15.0f);
             glUniform3f(glGetUniformLocation(s.ID, "lightColor"), 1.0f, 1.0f, 1.0f);
-            glUniform3f(glGetUniformLocation(s.ID, "objectColor"), 0.0f, 0.0f, 1.0f);
+            glUniform1f(glGetUniformLocation(s.ID, "amplitude"), amplitude);
+            glUniform1f(glGetUniformLocation(s.ID, "fresnelStrength"), fresnelStrength);
+
+
 
             glDepthFunc(GL_LEQUAL);
             skybox.use();
@@ -565,6 +570,18 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
         camera.ProcessKeyboard(DOWN, deltaTime);
         projector.ProcessKeyboard(DOWN, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+        amplitude -= 0.1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+        amplitude += 0.1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+        fresnelStrength -= 1.0;
+    }
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+        fresnelStrength += 1.0;
     }
     // Wireframe toggle (on key press, not held)
     bool wireframeKeyCurrentlyPressed = glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS;

@@ -12,9 +12,13 @@ uniform mat4 range;
 uniform float time;
 
 
+uniform float amplitude;
 
 
 
+
+
+vec3 getDisplacedNormal(vec2 uv);
 vec2 fade(vec2 t);
 vec4 permute(vec4 x);
 float perlinNoise(vec2 P);
@@ -22,6 +26,8 @@ vec3 getDisplacedPosition(vec2 uv);
 bool intersectSegmentWithXZPlane(vec3 p0, vec3 p1, float planeY, out vec3 contactPoint);
 
 out vec2 texCoord;
+out vec3 fragPosWorld;
+out vec3 normal;
 
 
 void main() {
@@ -47,14 +53,18 @@ void main() {
     float displacement = perlinNoise((contact.xz + vec2(time * 0.2)) * 0.5);
 
     // Apply the noise as vertical displacement
-    contact.y += displacement * 1.2; // Adjust amplitude (0.2) as needed
-
+    contact.y += displacement * amplitude; // Adjust amplitude (0.2) as needed
+        fragPosWorld = contact;
+        normal = getDisplacedNormal(contact.xz);
         gl_Position = camera_projection * camera_view * vec4(contact, 1.0);
+
     } else {
+        fragPosWorld = contact;
+        normal = getDisplacedNormal(contact.xz);
         gl_Position = camera_projection * camera_view * vec4(0, 0, 0, 1);
     }
 
-    texCoord = vec2(textureCoords.x, textureCoords.y);
+    texCoord = vec2(contact.x, contact.y);
 
 }
 
@@ -145,4 +155,18 @@ vec3 getDisplacedPosition(vec2 uv) {
     }
 
     return vec3(uv.x, displacement * 0.2, uv.y); // note: uv = xz
+}
+
+vec3 getDisplacedNormal(vec2 uv) {
+    float epsilon = 0.01;
+
+    vec3 center = getDisplacedPosition(uv);
+    vec3 offsetX = getDisplacedPosition(uv + vec2(epsilon, 0.0));
+    vec3 offsetZ = getDisplacedPosition(uv + vec2(0.0, epsilon));
+
+    vec3 tangentX = offsetX - center;
+    vec3 tangentZ = offsetZ - center;
+
+    vec3 normal = normalize(cross(tangentZ, tangentX));
+    return normal;
 }
