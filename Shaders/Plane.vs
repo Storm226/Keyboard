@@ -2,6 +2,8 @@
 
 
 layout  (location = 0) in vec3 v_position;
+layout(location = 1) in vec2 textureCoords;
+
 
 uniform mat4 camera_view;
 uniform mat4 camera_projection;
@@ -18,6 +20,9 @@ vec4 permute(vec4 x);
 float perlinNoise(vec2 P);
 vec3 getDisplacedPosition(vec2 uv);
 bool intersectSegmentWithXZPlane(vec3 p0, vec3 p1, float planeY, out vec3 contactPoint);
+
+out vec2 texCoord;
+
 
 void main() {
 
@@ -48,6 +53,8 @@ void main() {
     } else {
         gl_Position = camera_projection * camera_view * vec4(0, 0, 0, 1);
     }
+
+    texCoord = vec2(textureCoords.x, textureCoords.y);
 
 }
 

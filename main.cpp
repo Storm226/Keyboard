@@ -1,5 +1,5 @@
 ﻿#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 #include "Headers/Shader.h"
 #include "Headers/Camera.h"
@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,6 +21,88 @@ Camera camera(glm::vec3(0.0f,20.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -0.0f, 0
 Camera projector(glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), -10.0f, -30.0f);
 std::vector<glm::vec3> plane_vertices;
 
+float skyboxVertices[] = {
+    // positions          
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+};
+
+GLuint cubemapTexture;
+std::vector<std::string> faces = {
+    "miramar_lf.png",
+    "miramar_rt.png",
+    "miramar_up.png",
+    "miramar_dn.png",
+    "miramar_ft.png",
+    "miramar_bk.png"
+};
+
+GLuint loadCubemap(std::vector<std::string> faces) {
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    unsigned width, height;
+    std::vector<unsigned char> image;
+
+    for (GLuint i = 0; i < faces.size(); i++) {
+        image.clear();
+        if (lodepng::decode(image, width, height, faces[i]) == 0) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA,
+                width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+        }
+        else {
+            std::cout << "Failed to load cubemap texture: " << faces[i] << std::endl;
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
 
 int main(int argc, char** argv)
 {
@@ -27,6 +110,8 @@ int main(int argc, char** argv)
         std::cout << "FAILURE DURING SETUP\n";
 
     Shader s("Shaders/Plane.vs", "Shaders/basic_object_shader.fs", nullptr, nullptr, nullptr);
+    Shader skybox("skybox.vs", "skybox.fs", nullptr, nullptr, nullptr);
+
     GLuint obj_VAO, obj_VBO;
 
     glm::mat4 view;
@@ -36,6 +121,31 @@ int main(int argc, char** argv)
     glm::mat4 M_Projector;
     glm::mat4 range;
  
+    glEnable(GL_DEPTH_TEST);
+
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    unsigned width, height;
+    std::vector<unsigned char> image;
+    lodepng::decode(image, width, height, "water3.png");
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
 
     setupPlaneMesh();
     populate_buffer(obj_VAO, obj_VBO, plane_vertices, false, false);
@@ -45,6 +155,10 @@ int main(int argc, char** argv)
     glEnable(GL_DEPTH_TEST);
 
     s.use();
+    cubemapTexture = loadCubemap(faces);
+    glUseProgram(s.ID);
+    glUniform1i(glGetUniformLocation(s.ID, "skybox"), 0);
+
 
         //render loop
         // ----------------------------------
@@ -95,9 +209,29 @@ int main(int argc, char** argv)
             float time = glfwGetTime();
             glUniform1f(glGetUniformLocation(s.ID, "time"), time);
 
+            glUniform3f(glGetUniformLocation(s.ID, "cameraWorldPosition"), camera.Position.x, camera.Position.y, camera.Position.z);
+            glUniform3f(glGetUniformLocation(s.ID, "lightPosWorld"), 15.0f, 30.0f, -15.0f);
+            glUniform3f(glGetUniformLocation(s.ID, "lightColor"), 1.0f, 1.0f, 1.0f);
+            glUniform3f(glGetUniformLocation(s.ID, "objectColor"), 0.0f, 0.0f, 1.0f);
+
+            glDepthFunc(GL_LEQUAL);
+            skybox.use();
+            view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+            skybox.setMat4("view", view);
+            skybox.setMat4("projection", perspective);
+            glBindVertexArray(skyboxVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            glDepthMask(GL_FALSE);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glDepthMask(GL_TRUE);
+            glBindVertexArray(0);
+            glDepthFunc(GL_LESS);
 
 
             s.use();
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, texture);
             draw(obj_VAO, plane_vertices);
 
             std::cout << "Camera Position : ";
